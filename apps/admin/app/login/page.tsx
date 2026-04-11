@@ -26,7 +26,7 @@ export default function AdminLogin() {
         const data = await res.json();
         setError(data.error || "Invalid credentials.");
       }
-    } catch (_err) {
+    } catch {
       setError("An error occurred during login.");
     }
   };
