@@ -1,0 +1,1 @@
+export default function ChatbotControl() { return <div className="p-6"><h1 className="text-2xl font-bold">Chatbot Control</h1><p className="text-slate-400 mt-2">Placeholder for Admin Chatbot Control module.</p></div>; }

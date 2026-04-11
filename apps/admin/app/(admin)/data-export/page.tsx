@@ -1,0 +1,1 @@
+export default function DataExport() { return <div className="p-6"><h1 className="text-2xl font-bold">Data Export</h1><p className="text-slate-400 mt-2">Placeholder for Admin Data Export module.</p></div>; }

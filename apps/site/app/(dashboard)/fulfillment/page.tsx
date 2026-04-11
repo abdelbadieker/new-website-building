@@ -1,0 +1,1 @@
+export default function Fulfillment() { return <div className="p-6"><h1 className="text-2xl font-bold">Fulfillment</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Fulfillment module.</p></div>; }

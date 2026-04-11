@@ -1,0 +1,1 @@
+export default function Subscriptions() { return <div className="p-6"><h1 className="text-2xl font-bold">Subscriptions</h1><p className="text-slate-400 mt-2">Placeholder for Admin Subscriptions module.</p></div>; }
