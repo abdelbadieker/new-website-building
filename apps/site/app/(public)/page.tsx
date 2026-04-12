@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Bot, Package, ShoppingBag, Users, BarChart3, Truck, Star } from 'lucide-react';
 import { PartnershipsMarquee } from '@/components/PartnershipsMarquee';
+import { AuthNav } from '@/components/AuthNav';
+import { ReviewsSection } from '@/components/ReviewsSection';
 
 export default function LandingPage() {
   return (
@@ -16,8 +18,7 @@ export default function LandingPage() {
         </ul>
         <div className="nr">
           <ThemeToggle />
-          <Link href="/login" className="bgh">Sign In</Link>
-          <Link href="/register" className="bpc">Try It Now →</Link>
+          <AuthNav />
         </div>
       </nav>
 
@@ -350,6 +351,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* REVIEWS */}
+      <ReviewsSection />
 
       {/* CTA */}
       <section id="cta">
