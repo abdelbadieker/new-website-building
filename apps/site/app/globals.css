@@ -2,40 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary:     #1E3A8A;
-  --secondary:   #2563EB;
-  --accent:      #10B981;
-  --background:  #F8FAFC;
-  --surface:     #FFFFFF;
-  --text-main:   #0F172A;
-  --text-sub:    #475569;
-  --text-muted:  #94A3B8;
-  --border:      rgba(15,23,42,0.10);
-  --danger:      #EF4444;
-  --warning:     #F59E0B;
-  --dark-bg:     #07101F;
-  --dark-surface:#0A1628;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
+  /* DARK MODE (default) */
   :root {
-    --background: var(--dark-bg);
-    --surface: var(--dark-surface);
-    --text-main: #F8FAFC;
-    --text-sub: #94A3B8;
-    --text-muted: #475569;
-    --border: rgba(248,250,252,0.10);
+    --p: #1E3A8A;
+    --s: #2563EB;
+    --g: #10B981;
+    --bg: #F8FAFC;
+    --dm: #07101f;
+    --dms: #0a1628;
+    --border: rgba(255,255,255,.08);
+    --white: #FFFFFF;
+    
+    --bg-body: #07101f;
+    --bg-section: #0a1628;
+    --bg-card: rgba(255,255,255,.028);
+    --text-main: #FFFFFF;
+    --text-sub: rgba(255,255,255,.45);
+    --text-muted: rgba(255,255,255,.28);
+    --border-c: rgba(255,255,255,.08);
+    --card-hover: rgba(255,255,255,.05);
+    --nav-bg: rgba(7,16,31,.55);
+    --nav-scroll: rgba(7,16,31,.96);
+    --float-bg: rgba(8,18,38,.9);
+    --dash-bg: rgba(10,20,38,.92);
+    --chat-bg: rgba(10,20,38,.9);
+    --chat-msg-bot: rgba(255,255,255,.06);
+    --integ-label: rgba(255,255,255,.25);
+    --mq-fade: var(--dm);
+    --hsl: rgba(255,255,255,.3);
+    --track-pd: rgba(255,255,255,.12);
+    --footer-bg: rgba(5,10,20,1);
+    --theme-transition: background .35s ease, color .35s ease, border-color .35s ease;
   }
-}
 
-body {
-  color: var(--text-main);
-  background: var(--background);
+  /* LIGHT MODE */
+  [data-theme="light"] {
+    --bg-body: #F8FAFC;
+    --bg-section: #F1F5F9;
+    --bg-card: rgba(255,255,255,.9);
+    --text-main: #0F172A;
+    --text-sub: #475569;
+    --text-muted: #94A3B8;
+    --border-c: rgba(15,23,42,.1);
+    --card-hover: rgba(37,99,235,.04);
+    --nav-bg: rgba(248,250,252,.8);
+    --nav-scroll: rgba(248,250,252,.97);
+    --float-bg: rgba(255,255,255,.95);
+    --dash-bg: rgba(255,255,255,.98);
+    --chat-bg: rgba(255,255,255,.98);
+    --chat-msg-bot: rgba(15,23,42,.06);
+    --integ-label: rgba(15,23,42,.4);
+    --mq-fade: var(--bg-body);
+    --hsl: rgba(15,23,42,.4);
+    --track-pd: rgba(15,23,42,.12);
+    --footer-bg: #0F172A;
+  }
+
+  body {
+    background: var(--bg-body);
+    color: var(--text-main);
+    transition: var(--theme-transition);
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .noise {
+    position: fixed; inset: 0; opacity: .025; pointer-events: none; z-index: 1000;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
   }
+  .animate-gp { animation: gp 4s ease-in-out infinite; }
+  .animate-gp-reverse { animation: gp 6s ease-in-out infinite reverse; }
+  .animate-blink { animation: blink 2s infinite; }
+  .animate-fu { animation: fu 0.6s ease both; }
+  .animate-mqani { animation: mqani 28s linear infinite; }
+  .animate-mqani-slow { animation: mqani 38s linear infinite; }
+}
+
+@keyframes gp {
+  0%, 100% { transform: scale(1); opacity: .7; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
+  50% { opacity: .5; box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+}
+@keyframes fu {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mqani {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes successPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes authIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
 }
