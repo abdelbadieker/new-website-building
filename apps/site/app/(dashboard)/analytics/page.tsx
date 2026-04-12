@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { BarChart3, TrendingUp, Package, Users, ShoppingBag, ArrowUpRight, ArrowDownRight, DollarSign } from 'lucide-react';
+import { Package, Users, ShoppingBag, DollarSign } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const supabase = createClient();
@@ -26,10 +26,10 @@ export default function AnalyticsPage() {
   }, []);
 
   const kpis = [
-    { title: 'Total Revenue', value: `DA ${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: '#34d399', trend: '+12.5%', up: true },
-    { title: 'Total Orders', value: String(stats.totalOrders), icon: ShoppingBag, color: '#60a5fa', trend: '+8.2%', up: true },
-    { title: 'Products', value: String(stats.totalProducts), icon: Package, color: '#a78bfa', trend: '+3.1%', up: true },
-    { title: 'Customers', value: String(stats.totalCustomers), icon: Users, color: '#fbbf24', trend: '+15.4%', up: true },
+    { title: 'Total Revenue', value: `DA ${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: '#34d399' },
+    { title: 'Total Orders', value: String(stats.totalOrders), icon: ShoppingBag, color: '#60a5fa' },
+    { title: 'Products', value: String(stats.totalProducts), icon: Package, color: '#a78bfa' },
+    { title: 'Customers', value: String(stats.totalCustomers), icon: Users, color: '#fbbf24' },
   ];
 
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 20 } as React.CSSProperties };
@@ -47,9 +47,6 @@ export default function AnalyticsPage() {
             <div key={k.title} style={{ ...s.card, transition: 'transform 0.2s, border-color 0.2s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon style={{ width: 22, height: 22, color: k.color }} /></div>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color: k.up ? '#34d399' : '#f87171' }}>
-                  {k.up ? <ArrowUpRight style={{ width: 14, height: 14 }} /> : <ArrowDownRight style={{ width: 14, height: 14 }} />}{k.trend}
-                </span>
               </div>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>{k.title}</div>
               <div style={{ fontSize: 28, fontWeight: 900, color: '#f1f5f9', letterSpacing: -1 }}>{k.value}</div>
@@ -58,22 +55,7 @@ export default function AnalyticsPage() {
         })}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
-        <div style={s.card}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 20 }}>Revenue Breakdown</h2>
-          <div style={{ display: 'flex', gap: 8, height: 200, alignItems: 'flex-end' }}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-              const h = [65, 40, 80, 55, 90, 70, 45][i];
-              return (
-                <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: '100%', height: `${h}%`, background: 'linear-gradient(180deg, #34d399, #059669)', borderRadius: 6, minHeight: 10, transition: 'height 0.5s ease' }} />
-                  <span style={{ fontSize: 11, color: '#64748b' }}>{day}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
         <div style={s.card}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 20 }}>Orders by Status</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

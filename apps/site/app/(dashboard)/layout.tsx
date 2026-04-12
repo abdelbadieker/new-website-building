@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, MapPin, 
   Mail, Sparkles, Paintbrush, Globe, Store, 
@@ -26,17 +27,41 @@ const navItems = [
   { name: 'Support', href: '/support', icon: HelpCircle },
 ];
 
-const sampleNotifications = [
-  { id: 1, title: 'New order received', desc: 'Order #ORD-093 from Karim M.', time: '2 min ago', unread: true },
-  { id: 2, title: 'Product low stock', desc: 'Wireless Earbuds — 3 units left', time: '18 min ago', unread: true },
-  { id: 3, title: 'Payment confirmed', desc: 'DA 12,000 received for #ORD-091', time: '1 hour ago', unread: false },
-  { id: 4, title: 'New review submitted', desc: '⭐⭐⭐⭐⭐ from Sarah B.', time: '3 hours ago', unread: false },
-];
+type Notif = { id: string; title: string; desc: string; time: string };
+
+function timeAgo(d: string) {
+  const diff = Date.now() - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function MerchantLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [showNotif, setShowNotif] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notif[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const fetchNotifs = async () => {
+      const items: Notif[] = [];
+      // Recent orders
+      const { data: orders } = await supabase.from('orders').select('id, customer_name, tracking_code, total, created_at').order('created_at', { ascending: false }).limit(3);
+      if (orders) orders.forEach(o => items.push({ id: 'order-' + o.id, title: 'Order from ' + o.customer_name, desc: `${o.tracking_code} — DA ${o.total?.toLocaleString()}`, time: timeAgo(o.created_at) }));
+      // Low stock products
+      const { data: lowStock } = await supabase.from('products').select('id, name, stock').lt('stock', 20).order('stock', { ascending: true }).limit(2);
+      if (lowStock) lowStock.forEach(p => items.push({ id: 'stock-' + p.id, title: 'Low stock alert', desc: `${p.name} — ${p.stock} units left`, time: 'Now' }));
+      // Open tickets
+      const { data: tickets } = await supabase.from('support_tickets').select('id, subject, created_at').eq('status', 'Open').order('created_at', { ascending: false }).limit(2);
+      if (tickets) tickets.forEach(t => items.push({ id: 'ticket-' + t.id, title: 'Open ticket', desc: t.subject, time: timeAgo(t.created_at) }));
+      setNotifications(items);
+    };
+    fetchNotifs();
+  }, []);
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#07101F', overflow: 'hidden', color: '#cbd5e1', position: 'relative' }}>
@@ -169,7 +194,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                 style={{ position: 'relative', color: '#94a3b8', background: showNotif ? 'rgba(51,65,85,0.4)' : 'none', border: 'none', padding: 8, borderRadius: 999, transition: 'all 0.2s' }}
               >
                 <Bell style={{ width: 20, height: 20 }} />
-                <span style={{ position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px rgba(239,68,68,0.7)' }} />
+                {notifications.length > 0 && <span style={{ position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px rgba(239,68,68,0.7)' }} />}
               </button>
 
               {/* Notification Dropdown */}
@@ -192,9 +217,11 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                     <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>Notifications</span>
                     <span style={{ fontSize: 11, fontWeight: 600, color: '#3b82f6', cursor: 'pointer' }}>Mark all read</span>
                   </div>
-                  {sampleNotifications.map((n) => (
-                    <div key={n.id} style={{ padding: '14px 18px', borderBottom: '1px solid rgba(51,65,85,0.2)', display: 'flex', gap: 12, alignItems: 'flex-start', background: n.unread ? 'rgba(59,130,246,0.04)' : 'transparent', transition: 'background 0.2s' }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: n.unread ? '#3b82f6' : 'transparent', marginTop: 6, flexShrink: 0 }} />
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '28px 18px', textAlign: 'center', color: '#475569', fontSize: 13 }}>No new notifications</div>
+                  ) : notifications.map((n) => (
+                    <div key={n.id} style={{ padding: '14px 18px', borderBottom: '1px solid rgba(51,65,85,0.2)', display: 'flex', gap: 12, alignItems: 'flex-start', background: 'rgba(59,130,246,0.04)', transition: 'background 0.2s' }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6', marginTop: 6, flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9' }}>{n.title}</div>
                         <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{n.desc}</div>
@@ -202,9 +229,6 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                       </div>
                     </div>
                   ))}
-                  <div style={{ padding: '12px 18px', textAlign: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#34d399', cursor: 'pointer' }}>View All Notifications</span>
-                  </div>
                 </div>
               )}
             </div>
