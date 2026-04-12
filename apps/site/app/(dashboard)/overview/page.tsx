@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Package, Users, ShoppingBag, ArrowUpRight, DollarSign, Activity } from 'lucide-react';
+import { Package, Users, ShoppingBag, DollarSign, Inbox } from 'lucide-react';
 
 export default function OverviewPage() {
   const supabase = createClient();
@@ -40,7 +40,7 @@ export default function OverviewPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div><h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9' }}>Dashboard Overview</h1><p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Here&apos;s what&apos;s happening with your store today</p></div>
+      <div><h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9' }}>Dashboard Overview</h1><p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Here&apos;s what&apos;s happening with your store</p></div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         {kpis.map(k => {
@@ -49,7 +49,6 @@ export default function OverviewPage() {
             <div key={k.title} style={{ ...s.card, transition: 'transform 0.2s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon style={{ width: 22, height: 22, color: k.color }} /></div>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 11, fontWeight: 700, color: '#34d399' }}><ArrowUpRight style={{ width: 12, height: 12 }} />Live</span>
               </div>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{k.title}</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', letterSpacing: -0.5 }}>{k.value}</div>
@@ -62,9 +61,13 @@ export default function OverviewPage() {
         <div style={s.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>Recent Orders</h2>
-            <span style={{ fontSize: 12, color: '#34d399', fontWeight: 600 }}>View All →</span>
           </div>
-          {stats.recentOrders.map((o, i) => (
+          {stats.recentOrders.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <Inbox style={{ width: 36, height: 36, color: '#334155', margin: '0 auto 10px' }} />
+              <p style={{ color: '#64748b', fontSize: 13 }}>No orders yet</p>
+            </div>
+          ) : stats.recentOrders.map((o, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < stats.recentOrders.length - 1 ? '1px solid rgba(51,65,85,0.3)' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package style={{ width: 16, height: 16, color: '#64748b' }} /></div>
@@ -80,15 +83,11 @@ export default function OverviewPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={s.card}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Activity style={{ width: 18, height: 18, color: '#a78bfa' }} /><span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>Quick Stats</span></div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 12 }}>Quick Stats</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Open Tickets</span><span style={{ fontWeight: 700, color: stats.openTickets > 0 ? '#fbbf24' : '#34d399' }}>{stats.openTickets}</span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Avg. Order Value</span><span style={{ fontWeight: 700, color: '#e2e8f0' }}>DA {stats.orders > 0 ? Math.round(stats.revenue / stats.orders).toLocaleString() : 0}</span></div>
             </div>
-          </div>
-          <div style={{ ...s.card, background: 'linear-gradient(135deg, rgba(52,211,153,0.08), rgba(59,130,246,0.08))' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 6 }}>🚀 Tip of the Day</div>
-            <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6 }}>Add product descriptions to boost your conversion rate by up to 30%!</p>
           </div>
         </div>
       </div>
