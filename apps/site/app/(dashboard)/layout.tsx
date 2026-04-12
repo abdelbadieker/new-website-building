@@ -120,8 +120,8 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        {/* User Profile + Collapsible Nav */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* User Profile + Nav + Logout — all scroll together */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           
           {/* User Section Header */}
           <button
@@ -202,25 +202,25 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-        </nav>
-        
-        {/* Logout Button at Bottom */}
-        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(51,65,85,0.4)' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-              padding: '10px 14px', borderRadius: 10, border: 'none',
-              background: 'rgba(239,68,68,0.06)',
-              color: '#f87171', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
-          >
-            <LogOut style={{ width: 16, height: 16 }} />
-            <span>Log Out</span>
-          </button>
+
+          {/* Logout — directly after nav items */}
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(51,65,85,0.4)' }}>
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                padding: '10px 14px', borderRadius: 10, border: 'none',
+                background: 'rgba(239,68,68,0.06)',
+                color: '#f87171', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
+            >
+              <LogOut style={{ width: 16, height: 16 }} />
+              <span>Log Out</span>
+            </button>
+          </div>
         </div>
       </aside>
 

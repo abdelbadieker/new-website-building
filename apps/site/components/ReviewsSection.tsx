@@ -25,17 +25,33 @@ export function ReviewsSection() {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    const sb = createClient();
+
     // Fetch approved reviews
-    supabase
-      .from('reviews')
+    sb.from('reviews')
       .select('*')
       .eq('is_approved', true)
       .order('created_at', { ascending: false })
       .limit(6)
       .then(({ data }) => setReviews(data || []));
 
-    // Check auth
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    // Check auth via session (works without middleware, reads local storage)
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUser(data.session.user as typeof user);
+      }
+    });
+
+    // Also listen for auth state changes (e.g. if user logs in from another tab)
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user as typeof user);
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
