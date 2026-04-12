@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CustomCursor } from '@/components/CustomCursor';
 
 export default function LandingPage() {
   return (
     <>
       {/* NOISE & EFFECTS */}
+      <CustomCursor />
       <div className="noise"></div>
 
       {/* NAV */}
@@ -29,13 +31,13 @@ export default function LandingPage() {
           <div className="hbadge"><span className="hbdot"></span>All-in-One SaaS Platform for Algerian Business</div>
           <h1 className="hhline">
             <span className="hh1">Build your</span>
-            <span className="hh2">Business</span>
+            <span className="hh2" style={{ paddingRight: '0.1em' }}>Business</span>
             <span className="hh3">without the <span className="hh3c">complexity.</span></span>
           </h1>
           <p className="hsub">EcoMate centralizes every tool Algerian SMEs need into one platform — AI chatbot automation, order management, CRM. No technical knowledge required.</p>
           <div className="hact">
             <Link href="/register" className="bh1">
-              Start Free Trial
+              Start Now
               <svg className="arri" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
             <a href="#features" className="bh2-live">
@@ -264,7 +266,7 @@ export default function LandingPage() {
         <div className="ctr">
           <p className="stag">Clear Pricing</p>
           <h2 className="st">Simple, transparent pricing.</h2>
-          <p className="sd">Try EcoMate free for 14 days. No credit card required. Upgrade when you are ready to scale.</p>
+          <p className="sd">Join EcoMate today. Upgrade when you are ready to scale.</p>
         </div>
         <div className="pgrid">
           <div className="pc">
@@ -277,7 +279,7 @@ export default function LandingPage() {
               <li>Order Management</li>
               <li>Email Support</li>
             </ul>
-            <Link href="/register"><button className="pb">Start Free Trial</button></Link>
+            <Link href="/register"><button className="pb">Get Started</button></Link>
           </div>
           <div className="pc pop">
             <div className="pbdg">Most Popular</div>
@@ -291,7 +293,7 @@ export default function LandingPage() {
               <li>Delivery Integration</li>
               <li>Priority Support</li>
             </ul>
-            <Link href="/register"><button className="pb">Start Free Trial</button></Link>
+            <Link href="/register"><button className="pb">Get Started</button></Link>
           </div>
           <div className="pc">
             <div className="pn">Enterprise</div>
@@ -314,10 +316,10 @@ export default function LandingPage() {
         <h2 className="ct">Ready to automate your <span className="hi">Sales?</span></h2>
         <p className="csub">Join hundreds of merchants in Algeria who have centralized their operations and skyrocketed their revenue with EcoMate.</p>
         <div className="cacts">
-          <Link href="/register" className="bcta">Start 14-Day Free Trial</Link>
+          <Link href="/register" className="bcta">Get Started Now</Link>
           <Link href="/login" className="bctag">Sign In to Dashboard</Link>
         </div>
-        <p className="cnote">No credit card required. Cancel anytime.</p>
+        <p className="cnote">Cancel anytime.</p>
       </section>
 
       {/* FOOTER */}
