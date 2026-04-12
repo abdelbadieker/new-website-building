@@ -258,7 +258,7 @@ export default function LandingPage() {
                   <div className="flex gap-1 mb-5">
                     {[1,2,3,4,5].map(s => <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" />)}
                   </div>
-                  <p className="text-slate-300 leading-relaxed mb-8 italic">"{r.copy}"</p>
+                  <p className="text-slate-300 leading-relaxed mb-8 italic">&quot;{r.copy}&quot;</p>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center font-bold text-white text-lg shadow-inner">{r.name[0]}</div>
                     <div>
