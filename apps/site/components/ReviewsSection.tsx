@@ -76,10 +76,10 @@ export function ReviewsSection() {
     <section id="reviews" style={{ padding: '100px 5vw', position: 'relative' }}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
         <h2 className="ct" style={{ marginBottom: 16 }}>
-          What Our <span className="hi">Merchants</span> Say
+          <span className="hi">Reviews</span>
         </h2>
         <p className="csub" style={{ maxWidth: 560, margin: '0 auto' }}>
-          Real feedback from businesses using EcoMate every day
+          Share your experience with EcoMate
         </p>
       </div>
 

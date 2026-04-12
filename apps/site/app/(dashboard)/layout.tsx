@@ -115,7 +115,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #34d399, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(52,211,153,0.3)' }}>
             <span style={{ color: '#fff', fontWeight: 800, fontSize: 18 }}>E</span>
           </div>
-          <Link href="/overview" style={{ fontSize: 22, fontWeight: 800, background: 'linear-gradient(90deg, #34d399, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none', letterSpacing: '-0.5px' }}>
+          <Link href="/" style={{ fontSize: 22, fontWeight: 800, background: 'linear-gradient(90deg, #34d399, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none', letterSpacing: '-0.5px' }}>
             EcoMate
           </Link>
         </div>

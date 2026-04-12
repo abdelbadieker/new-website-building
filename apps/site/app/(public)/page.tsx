@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Bot, Package, ShoppingBag, Users, BarChart3, Truck, Star } from 'lucide-react';
+import { Bot, Package, ShoppingBag, Users, BarChart3, Truck } from 'lucide-react';
 import { PartnershipsMarquee } from '@/components/PartnershipsMarquee';
 import { AuthNav } from '@/components/AuthNav';
 import { ReviewsSection } from '@/components/ReviewsSection';
@@ -51,32 +51,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Floating cards */}
-        <div className="fc fc1">
-          <div className="fct">Revenue Today</div>
-          <div className="fcrow"><span style={{fontSize:'22px'}}>💰</span><span className="fcm fcg">127,400 DA</span></div>
-          <div className="fctag">↑ +23.4% vs yesterday</div>
-          <div className="fcspark">
-            <div className="fsb" style={{height:'40%'}}></div><div className="fsb" style={{height:'55%'}}></div>
-            <div className="fsb a" style={{height:'70%'}}></div><div className="fsb a" style={{height:'60%'}}></div>
-            <div className="fsb p" style={{height:'90%'}}></div><div className="fsb a" style={{height:'80%'}}></div>
-            <div className="fsb p" style={{height:'100%'}}></div>
-          </div>
-        </div>
-        <div className="fc fc2">
-          <div className="fct">New Order ✅</div>
-          <div className="fcrow"><span style={{fontSize:'20px'}}>📦</span>
-            <div style={{marginLeft:'8px'}}>
-              <div style={{fontFamily:'var(--font-poppins)', fontSize:'14px', fontWeight:'700'}}>Order #2847</div>
-              <div style={{fontSize:'11px', color:'rgba(255,255,255,.35)', marginTop:'2px'}}>Confirmed by AI · 2 min ago</div>
-            </div>
-          </div>
-        </div>
-        <div className="fc fc3">
-          <div className="fct">AI Response Rate</div>
-          <div className="fcm" style={{fontSize:'26px'}}>98.7<span style={{fontSize:'15px', color:'rgba(255,255,255,.35)'}}>%</span></div>
-          <div className="fctag" style={{marginTop:'6px'}}>← 3.4k messages handled</div>
-        </div>
+
       </section>
 
       <PartnershipsMarquee />
@@ -219,57 +194,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* REVIEWS SECTION */}
-      <section id="reviews" className="py-32 px-5 relative bg-[#07101f] overflow-hidden">
-        <div className="ctag2"></div>
-        <div className="max-w-7xl mx-auto text-center mb-16 relative z-10">
-          <p className="text-[#10B981] font-bold tracking-widest uppercase text-xs mb-4 flex items-center justify-center gap-2">
-            <span className="w-4 h-[2px] bg-[#10B981]"></span>
-            Trusted by Merchants
-          </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 font-poppins">
-            Hear from our <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-300">Community.</span>
-          </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-10">
-            Hundreds of Algerian businesses are saving time and scaling their revenue using EcoMate.
-          </p>
-          <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all shadow-xl">
-            <Star className="w-4 h-4 text-emerald-400" fill="currentColor" />
-            Submit a Review from Dashboard
-          </Link>
-        </div>
-
-        {/* Marquee effect */}
-        <div className="relative w-full overflow-hidden py-10">
-           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#07101f] to-transparent z-10 pointer-events-none"></div>
-           <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#07101f] to-transparent z-10 pointer-events-none"></div>
-           
-           <div className="flex animate-mqani gap-6 w-max hover:[animation-play-state:paused]">
-             {[
-               { name: "Ahmed B.", biz: "AlgeriaTech Store", copy: "Since integrating EcoMate, my page's response time went to 0. The bot is extremely smart and my sales have doubled simply because clients get answers instantly." },
-               { name: "Sarah M.", biz: "Boutique Dz", copy: "Order tracking with COD used to be a nightmare. EcoMate handles the delivery confirmations and tracks Yalidine perfectly. Highly recommended!" },
-               { name: "Yacine Kh", biz: "Cosmetics Algiers", copy: "Best investment for our business this year. We fired 2 customer service agents because the AI handles 95% of incoming messages seamlessly." },
-               { name: "Ahmed B.", biz: "AlgeriaTech Store", copy: "Since integrating EcoMate, my page's response time went to 0. The bot is extremely smart and my sales have doubled simply because clients get answers instantly." },
-               { name: "Sarah M.", biz: "Boutique Dz", copy: "Order tracking with COD used to be a nightmare. EcoMate handles the delivery confirmations and tracks Yalidine perfectly. Highly recommended!" },
-               { name: "Yacine Kh", biz: "Cosmetics Algiers", copy: "Best investment for our business this year. We fired 2 customer service agents because the AI handles 95% of incoming messages seamlessly." }
-             ].map((r, i) => (
-                <div key={i} className="w-[350px] md:w-[420px] p-8 rounded-3xl bg-[#0a1628] border border-slate-800 shrink-0 shadow-lg cursor-default hover:border-emerald-500/30 transition-colors">
-                  <div className="flex gap-1 mb-5">
-                    {[1,2,3,4,5].map(s => <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" />)}
-                  </div>
-                  <p className="text-slate-300 leading-relaxed mb-8 italic">&quot;{r.copy}&quot;</p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center font-bold text-white text-lg shadow-inner">{r.name[0]}</div>
-                    <div>
-                      <div className="text-white font-bold">{r.name}</div>
-                      <div className="text-slate-500 text-sm">{r.biz}</div>
-                    </div>
-                  </div>
-                </div>
-             ))}
-           </div>
-        </div>
-      </section>
+      {/* REVIEWS — Real DB-backed reviews */}
+      <ReviewsSection />
 
       {/* HOW IT WORKS */}
       <section id="how">
@@ -352,8 +278,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* REVIEWS */}
-      <ReviewsSection />
+
 
       {/* CTA */}
       <section id="cta">

@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
 type BotResponse = { id: string; trigger_phrase: string; response: string; category: string; is_active: boolean; created_at: string };
+type Demo = { id: string; video_url: string; title: string; description: string };
 
 export default function ChatbotControl() {
   const supabase = createClient();
@@ -12,9 +13,31 @@ export default function ChatbotControl() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ trigger_phrase: '', response: '', category: 'General' });
+  const [demo, setDemo] = useState<Demo | null>(null);
+  const [demoForm, setDemoForm] = useState({ video_url: '', title: 'AI Chatbot Demo', description: '' });
+  const [showDemoForm, setShowDemoForm] = useState(false);
 
   const fetch_ = async () => { const { data } = await supabase.from('chatbot_responses').select('*').order('created_at', { ascending: false }); setResponses(data || []); setLoading(false); };
-  useEffect(() => { fetch_(); }, []);
+  const fetchDemo = async () => {
+    const { data } = await supabase.from('chatbot_demo').select('*').order('created_at', { ascending: false }).limit(1);
+    const d = data?.[0] || null;
+    setDemo(d);
+    if (d) setDemoForm({ video_url: d.video_url, title: d.title, description: d.description });
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetch_(); fetchDemo(); }, []);
+
+  const handleSaveDemo = async () => {
+    if (!demoForm.video_url.trim()) return;
+    if (demo) {
+      await supabase.from('chatbot_demo').update(demoForm).eq('id', demo.id);
+    } else {
+      await supabase.from('chatbot_demo').insert(demoForm);
+    }
+    await supabase.from('activity_logs').insert({ action: 'Updated chatbot demo video', entity_type: 'chatbot' });
+    setShowDemoForm(false);
+    fetchDemo();
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +64,31 @@ export default function ChatbotControl() {
       <div className="flex justify-between items-center">
         <div><h2 className="text-2xl font-bold">Chatbot Control</h2><p className="text-slate-400 text-sm mt-1">{responses.filter(r => r.is_active).length} active responses</p></div>
         <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-sm transition-colors">+ Add Response</button>
+      </div>
+
+      {/* Demo Video Management */}
+      <div className="bg-[#0A1628] border border-slate-800 rounded-xl p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">📹 Client Demo Video</h3>
+          <button onClick={() => setShowDemoForm(!showDemoForm)} className="text-xs px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">{demo ? 'Edit Video' : 'Set Video'}</button>
+        </div>
+        {demo ? (
+          <div className="text-sm">
+            <p className="text-slate-300 mb-1"><span className="text-slate-500">Title:</span> {demo.title}</p>
+            <p className="text-slate-300 mb-1"><span className="text-slate-500">URL:</span> <a href={demo.video_url} target="_blank" rel="noreferrer" className="text-blue-400 underline">{demo.video_url}</a></p>
+            {demo.description && <p className="text-slate-400 text-xs mt-2">{demo.description}</p>}
+          </div>
+        ) : (
+          <p className="text-slate-500 text-sm">No demo video set yet. Clients will see a placeholder message.</p>
+        )}
+        {showDemoForm && (
+          <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Video URL</label><input value={demoForm.video_url} onChange={e => setDemoForm({ ...demoForm, video_url: e.target.value })} placeholder="https://..." className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" /></div>
+            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Title</label><input value={demoForm.title} onChange={e => setDemoForm({ ...demoForm, title: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" /></div>
+            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Description</label><textarea value={demoForm.description} onChange={e => setDemoForm({ ...demoForm, description: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm min-h-[60px] resize-y" /></div>
+            <button onClick={handleSaveDemo} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm">Save Demo Video</button>
+          </div>
+        )}
       </div>
 
       {showForm && (
