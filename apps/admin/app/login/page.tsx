@@ -7,10 +7,12 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     setError("");
 
     try {
@@ -21,13 +23,17 @@ export default function AdminLogin() {
       });
 
       if (res.ok) {
-        router.push("/dashboard");
+        // Success - force refresh to pick up the cookie in middleware
+        window.location.href = "/dashboard";
       } else {
         const data = await res.json();
         setError(data.error || "Invalid credentials.");
       }
-    } catch {
-      setError("An error occurred during login.");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An error occurred during login. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
