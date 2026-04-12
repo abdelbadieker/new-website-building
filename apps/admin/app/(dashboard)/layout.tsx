@@ -59,7 +59,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="h-16 flex items-center justify-between px-8 bg-[#0A1628] border-b border-slate-800">
-          <h1 className="text-xl font-semibold">Admin Overview</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold">Admin Overview</h1>
+            <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/20">ACTIVE-V2</span>
+          </div>
           <LogoutButton />
         </header>
 
