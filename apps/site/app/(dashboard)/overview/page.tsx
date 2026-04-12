@@ -1,135 +1,95 @@
-import { BarChart3, TrendingUp, Package, Users, Activity, ShoppingBag, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+'use client';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { BarChart3, Package, Users, ShoppingBag, ArrowUpRight, DollarSign, HelpCircle, Activity } from 'lucide-react';
 
 export default function OverviewPage() {
+  const supabase = createClient();
+  const [stats, setStats] = useState({ revenue: 0, orders: 0, products: 0, customers: 0, openTickets: 0, recentOrders: [] as { customer_name: string; total: number; status: string; tracking_code: string }[] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch_ = async () => {
+      const [o, p, c, t] = await Promise.all([
+        supabase.from('orders').select('*').order('created_at', { ascending: false }),
+        supabase.from('products').select('id'),
+        supabase.from('customers').select('id'),
+        supabase.from('support_tickets').select('id').eq('status', 'Open'),
+      ]);
+      const orders = o.data || [];
+      const rev = orders.reduce((a: number, b: { total: number }) => a + (b.total || 0), 0);
+      setStats({ revenue: rev, orders: orders.length, products: (p.data || []).length, customers: (c.data || []).length, openTickets: (t.data || []).length, recentOrders: orders.slice(0, 5) });
+      setLoading(false);
+    };
+    fetch_();
+  }, []);
+
+  const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 20 } as React.CSSProperties };
+
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div style={{ width: 32, height: 32, border: '3px solid #1e293b', borderTopColor: '#34d399', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>;
+
+  const kpis = [
+    { title: 'Total Revenue', value: `DA ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: '#34d399' },
+    { title: 'Orders', value: String(stats.orders), icon: ShoppingBag, color: '#60a5fa' },
+    { title: 'Products', value: String(stats.products), icon: Package, color: '#a78bfa' },
+    { title: 'Customers', value: String(stats.customers), icon: Users, color: '#fbbf24' },
+  ];
+
+  const statusColors: Record<string, string> = { Processing: '#fbbf24', Confirmed: '#60a5fa', Shipped: '#a78bfa', Delivered: '#34d399', Cancelled: '#f87171' };
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard Overview</h1>
-          <p className="text-slate-400 mt-1">Here&apos;s what&apos;s happening with your store today.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-slate-800/50 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium text-slate-200 transition-colors cursor-none">
-            Download Report
-          </button>
-          <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all cursor-none">
-            + Add Product
-          </button>
-        </div>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div><h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9' }}>Dashboard Overview</h1><p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Here&apos;s what&apos;s happening with your store today</p></div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard 
-          title="Total Revenue" 
-          value="DA 145,200.00" 
-          trend="+12.5%" 
-          isPositive={true} 
-          icon={<BarChart3 className="w-5 h-5 text-emerald-400" />} 
-        />
-        <KpiCard 
-          title="Active Orders" 
-          value="342" 
-          trend="+4.2%" 
-          isPositive={true} 
-          icon={<ShoppingBag className="w-5 h-5 text-blue-400" />} 
-        />
-        <KpiCard 
-          title="Conversion Rate" 
-          value="3.8%" 
-          trend="-1.1%" 
-          isPositive={false} 
-          icon={<Activity className="w-5 h-5 text-purple-400" />} 
-        />
-        <KpiCard 
-          title="Total Customers" 
-          value="1,204" 
-          trend="+18.2%" 
-          isPositive={true} 
-          icon={<Users className="w-5 h-5 text-amber-400" />} 
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Main Chart Placeholder */}
-        <div className="lg:col-span-2 bg-[#0A1628]/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold tracking-tight text-slate-100">Revenue Overview</h2>
-            <select className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-none">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>This Year</option>
-            </select>
-          </div>
-          <div className="h-72 w-full bg-slate-800/30 rounded-xl border border-dashed border-slate-700 flex items-center justify-center flex-col gap-3 relative z-10">
-            <TrendingUp className="w-8 h-8 text-slate-600" />
-            <span className="text-slate-500 text-sm font-medium">Chart visualization will load here</span>
-          </div>
-        </div>
-
-        {/* Recent Orders / Activity */}
-        <div className="bg-[#0A1628]/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold tracking-tight text-slate-100">Recent Orders</h2>
-            <button className="text-sm text-emerald-400 hover:text-emerald-300 font-medium cursor-none">View All</button>
-          </div>
-          
-          <div className="flex-1 space-y-4">
-            {[
-              { id: '#ORD-092', customer: 'Ahmed K.', amount: 'DA 8,500', status: 'Processing' },
-              { id: '#ORD-091', customer: 'Sarah B.', amount: 'DA 12,000', status: 'Shipped' },
-              { id: '#ORD-090', customer: 'Younes M.', amount: 'DA 4,200', status: 'Delivered' },
-              { id: '#ORD-089', customer: 'Lina R.', amount: 'DA 21,000', status: 'Processing' },
-            ].map((order, i) => (
-              <div key={i} className="flex justify-between items-center p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-slate-800 transition-colors cursor-none">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-300">
-                    <Package className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-200">{order.customer}</h3>
-                    <p className="text-xs text-slate-500">{order.id}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-emerald-400">{order.amount}</div>
-                  <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1 ${
-                    order.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-400' :
-                    order.status === 'Shipped' ? 'bg-blue-500/10 text-blue-400' :
-                    'bg-amber-500/10 text-amber-400'
-                  }`}>
-                    {order.status}
-                  </div>
-                </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        {kpis.map(k => {
+          const Icon = k.icon;
+          return (
+            <div key={k.title} style={{ ...s.card, transition: 'transform 0.2s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon style={{ width: 22, height: 22, color: k.color }} /></div>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 11, fontWeight: 700, color: '#34d399' }}><ArrowUpRight style={{ width: 12, height: 12 }} />Live</span>
               </div>
-            ))}
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{k.title}</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', letterSpacing: -0.5 }}>{k.value}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>Recent Orders</h2>
+            <span style={{ fontSize: 12, color: '#34d399', fontWeight: 600 }}>View All →</span>
+          </div>
+          {stats.recentOrders.map((o, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < stats.recentOrders.length - 1 ? '1px solid rgba(51,65,85,0.3)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1e293b', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package style={{ width: 16, height: 16, color: '#64748b' }} /></div>
+                <div><div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{o.customer_name}</div><div style={{ fontSize: 11, color: '#64748b' }}>{o.tracking_code}</div></div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>DA {o.total?.toLocaleString()}</div>
+                <span style={{ padding: '2px 8px', borderRadius: 999, background: `${statusColors[o.status] || '#60a5fa'}15`, color: statusColors[o.status] || '#60a5fa', fontSize: 10, fontWeight: 600 }}>{o.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={s.card}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Activity style={{ width: 18, height: 18, color: '#a78bfa' }} /><span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>Quick Stats</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Open Tickets</span><span style={{ fontWeight: 700, color: stats.openTickets > 0 ? '#fbbf24' : '#34d399' }}>{stats.openTickets}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Avg. Order Value</span><span style={{ fontWeight: 700, color: '#e2e8f0' }}>DA {stats.orders > 0 ? Math.round(stats.revenue / stats.orders).toLocaleString() : 0}</span></div>
+            </div>
+          </div>
+          <div style={{ ...s.card, background: 'linear-gradient(135deg, rgba(52,211,153,0.08), rgba(59,130,246,0.08))' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 6 }}>🚀 Tip of the Day</div>
+            <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6 }}>Add product descriptions to boost your conversion rate by up to 30%!</p>
           </div>
         </div>
-
-      </div>
-    </div>
-  );
-}
-
-function KpiCard({ title, value, trend, isPositive, icon }: { title: string, value: string, trend: string, isPositive: boolean, icon: React.ReactNode }) {
-  return (
-    <div className="bg-[#0A1628]/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-slate-700 transition-all cursor-none group">
-      <div className="flex justify-between items-start mb-4">
-        <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-          {icon}
-        </div>
-        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-          {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-          {trend}
-        </div>
-      </div>
-      <div>
-        <h3 className="text-slate-400 text-sm font-medium mb-1">{title}</h3>
-        <p className="text-2xl font-black text-white tracking-tight">{value}</p>
       </div>
     </div>
   );

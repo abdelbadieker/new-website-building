@@ -583,3 +583,6 @@ footer li a:hover{color:rgba(255,255,255,.7)}
 .ag-scan-line{height:2px;border-radius:2px;background:linear-gradient(90deg,var(--g),transparent);animation:scan 2.5s ease-in-out infinite;transform-origin:left}
 @keyframes scan{0%,100%{width:0%;opacity:1}50%{width:90%;opacity:.7}100%{width:100%;opacity:0}}
 
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes fadeInDown{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}

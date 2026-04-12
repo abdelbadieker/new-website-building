@@ -5,7 +5,7 @@ const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
   { name: 'Merchants', href: '/merchants', icon: '👥' },
   { name: 'Feature Toggles', href: '/feature-toggles', icon: '⚙️' },
-  { name: 'Subscriptions', href: '/subscriptions', icon: '💳' },
+  { name: 'Support Tickets', href: '/subscriptions', icon: '🎫' },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: '📦' },
   { name: 'Landing CMS', href: '/landing-cms', icon: '📝' },
   { name: 'Reviews', href: '/reviews', icon: '⭐' },
