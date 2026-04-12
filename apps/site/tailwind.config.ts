@@ -23,6 +23,15 @@ const config: Config = {
         "dark-surface": "var(--dark-surface)",
         border: "var(--border)",
       },
+      keyframes: {
+        mqani: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        }
+      },
+      animation: {
+        mqani: 'mqani 40s linear infinite',
+      }
     },
   },
   plugins: [],
