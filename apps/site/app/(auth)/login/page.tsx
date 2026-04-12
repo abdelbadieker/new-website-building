@@ -126,7 +126,7 @@ export default function MerchantLogin() {
         <p className="mt-8 text-center text-sm" style={{ color: 'var(--text-sub)' }}>
           Don&apos;t have an account?{' '}
           <Link href="/register" className="font-medium hover:underline" style={{ color: 'var(--s)' }}>
-            Start free trial
+            Create an account
           </Link>
         </p>
       </div>
