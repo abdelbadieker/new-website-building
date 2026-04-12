@@ -31,7 +31,15 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h2 className="text-2xl font-bold">Support Tickets</h2><p className="text-slate-400 text-sm mt-1">{tickets.filter(t => t.status === 'Open').length} open tickets</p></div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Support & Subscriptions</h2>
+          <p className="text-slate-400 text-sm mt-1">{tickets.filter(t => t.status === 'Open').length} open requests</p>
+        </div>
+        <div className="text-xs bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full border border-blue-500/20 font-medium">
+          Merchant Support Center
+        </div>
+      </div>
 
       {selected && (
         <div className="bg-[#0A1628] border border-slate-800 rounded-xl p-6 space-y-4">

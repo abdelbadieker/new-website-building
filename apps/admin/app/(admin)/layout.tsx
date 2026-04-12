@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import LogoutButton from './LogoutButton';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -59,9 +60,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {/* Topbar */}
         <header className="h-16 flex items-center justify-between px-8 bg-[#0A1628] border-b border-slate-800">
           <h1 className="text-xl font-semibold">Admin Overview</h1>
-          <button className="text-sm text-slate-400 hover:text-white transition-colors">
-            Log out
-          </button>
+          <LogoutButton />
         </header>
 
         {/* Page Content */}

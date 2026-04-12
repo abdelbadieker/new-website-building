@@ -30,7 +30,17 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h2 className="text-2xl font-bold">Reviews</h2><p className="text-slate-400 text-sm mt-1">{reviews.filter(r => r.is_approved).length} approved / {reviews.length} total</p></div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Reviews Management</h2>
+          <p className="text-slate-400 text-sm mt-1">
+            {reviews.filter(r => r.is_approved).length} approved / {reviews.length} total
+          </p>
+        </div>
+        <div className="text-xs bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
+          Live Database Sync
+        </div>
+      </div>
 
       <div className="space-y-3">
         {reviews.map(r => (
