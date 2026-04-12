@@ -1,16 +1,11 @@
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { CustomCursor } from '@/components/CustomCursor';
 import { Bot, Package, ShoppingBag, Users, BarChart3, Truck, Star } from 'lucide-react';
 import { PartnershipsMarquee } from '@/components/PartnershipsMarquee';
 
 export default function LandingPage() {
   return (
     <>
-      {/* NOISE & EFFECTS */}
-      <CustomCursor />
-      <div className="noise"></div>
-
       {/* NAV */}
       <nav id="nav">
         <div className="logo cursor-pointer">Eco<span>Mate</span></div>
