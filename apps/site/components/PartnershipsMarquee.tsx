@@ -3,8 +3,16 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+type Partner = {
+  id: string;
+  name: string;
+  is_emoji: boolean;
+  content: string;
+  created_at: string;
+};
+
 export function PartnershipsMarquee() {
-  const [partners, setPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -39,6 +47,7 @@ export function PartnershipsMarquee() {
               {partner.is_emoji ? (
                 <span className="text-4xl">{partner.content}</span>
               ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={partner.content} alt={partner.name} className="h-10 object-contain max-w-[150px]" />
               )}
               <span className="text-white font-bold text-xl tracking-tight hidden md:inline-block">{partner.name}</span>

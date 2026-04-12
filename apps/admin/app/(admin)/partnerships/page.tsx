@@ -11,8 +11,16 @@ function createClient() {
   );
 }
 
+type Partner = {
+  id: string;
+  name: string;
+  is_emoji: boolean;
+  content: string;
+  created_at: string;
+};
+
 export default function PartnershipsPage() {
-  const [partners, setPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
@@ -145,6 +153,7 @@ export default function PartnershipsPage() {
                     {partner.is_emoji ? (
                       <span className="text-3xl">{partner.content}</span>
                     ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={partner.content} alt={partner.name} className="h-8 object-contain max-w-[100px]" />
                     )}
                   </td>
