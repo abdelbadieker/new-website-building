@@ -1,1 +1,6 @@
-export default function Products() { return <div className="p-6"><h1 className="text-2xl font-bold">Products</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Products module.</p></div>; }
+import { ComingSoonModule } from '@/components/ComingSoonModule';
+import { Package } from 'lucide-react';
+
+export default function Products() {
+  return <ComingSoonModule title="Products" description="Add, edit, and organize your entire product catalog. Manage inventory, pricing, and variants — all in one place." icon={Package} />;
+}

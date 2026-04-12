@@ -1,1 +1,6 @@
-export default function Orders() { return <div className="p-6"><h1 className="text-2xl font-bold">Orders</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Orders module.</p></div>; }
+import { ComingSoonModule } from '@/components/ComingSoonModule';
+import { ShoppingBag } from 'lucide-react';
+
+export default function Orders() {
+  return <ComingSoonModule title="Orders" description="Track, manage, and fulfill all your incoming orders from a single powerful dashboard. Real-time status updates and automated workflows." icon={ShoppingBag} />;
+}

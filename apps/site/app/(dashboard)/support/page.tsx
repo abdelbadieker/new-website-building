@@ -1,1 +1,6 @@
-export default function Support() { return <div className="p-6"><h1 className="text-2xl font-bold">Support</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Support module.</p></div>; }
+import { ComingSoonModule } from '@/components/ComingSoonModule';
+import { HelpCircle } from 'lucide-react';
+
+export default function Support() {
+  return <ComingSoonModule title="Support" description="Get help when you need it. Live chat, knowledge base, and ticket system — we are here for you 24/7." icon={HelpCircle} />;
+}

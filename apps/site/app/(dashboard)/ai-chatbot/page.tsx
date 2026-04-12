@@ -1,1 +1,6 @@
-export default function AiChatbot() { return <div className="p-6"><h1 className="text-2xl font-bold">Ai Chatbot</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Ai Chatbot module.</p></div>; }
+import { ComingSoonModule } from '@/components/ComingSoonModule';
+import { Sparkles } from 'lucide-react';
+
+export default function AIChatbot() {
+  return <ComingSoonModule title="AI Chatbot" description="24/7 intelligent customer support powered by AI. Automate responses, qualify leads, and boost engagement effortlessly." icon={Sparkles} />;
+}

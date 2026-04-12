@@ -1,1 +1,6 @@
-export default function Fulfillment() { return <div className="p-6"><h1 className="text-2xl font-bold">Fulfillment</h1><p className="text-slate-400 mt-2">Placeholder for Merchant Fulfillment module.</p></div>; }
+import { ComingSoonModule } from '@/components/ComingSoonModule';
+import { Mail } from 'lucide-react';
+
+export default function Fulfillment() {
+  return <ComingSoonModule title="Fulfillment" description="Automate your shipping pipeline end-to-end. Smart warehouse management, label printing, and carrier integrations." icon={Mail} />;
+}
