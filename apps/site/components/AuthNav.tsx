@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export function AuthNav() {
+  const router = useRouter();
   const [user, setUser] = useState<{ email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +36,8 @@ export function AuthNav() {
             const supabase = createClient();
             await supabase.auth.signOut();
             setUser(null);
+            router.push('/');
+            router.refresh();
           }}
           className="bpc"
           style={{ cursor: 'pointer' }}

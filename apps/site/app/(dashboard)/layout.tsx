@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, MapPin, 
   Mail, Sparkles, Paintbrush, Globe, Store, 
   PieChart, CreditCard, HelpCircle, Search, Bell, LogOut,
-  ChevronRight, Menu, X
+  ChevronRight, ChevronDown, Menu, X, User
 } from 'lucide-react';
 
 const navItems = [
@@ -41,27 +41,47 @@ function timeAgo(d: string) {
 
 export default function MerchantLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showNotif, setShowNotif] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notif[]>([]);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [navOpen, setNavOpen] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
+
+    // Fetch user
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        const meta = data.user.user_metadata;
+        const name = meta?.full_name || meta?.name || data.user.email?.split('@')[0] || 'User';
+        setUserName(name);
+        setUserEmail(data.user.email || '');
+      }
+    });
+
+    // Fetch notifications
     const fetchNotifs = async () => {
       const items: Notif[] = [];
-      // Recent orders
       const { data: orders } = await supabase.from('orders').select('id, customer_name, tracking_code, total, created_at').order('created_at', { ascending: false }).limit(3);
       if (orders) orders.forEach(o => items.push({ id: 'order-' + o.id, title: 'Order from ' + o.customer_name, desc: `${o.tracking_code} — DA ${o.total?.toLocaleString()}`, time: timeAgo(o.created_at) }));
-      // Low stock products
       const { data: lowStock } = await supabase.from('products').select('id, name, stock').lt('stock', 20).order('stock', { ascending: true }).limit(2);
       if (lowStock) lowStock.forEach(p => items.push({ id: 'stock-' + p.id, title: 'Low stock alert', desc: `${p.name} — ${p.stock} units left`, time: 'Now' }));
-      // Open tickets
       const { data: tickets } = await supabase.from('support_tickets').select('id, subject, created_at').eq('status', 'Open').order('created_at', { ascending: false }).limit(2);
       if (tickets) tickets.forEach(t => items.push({ id: 'ticket-' + t.id, title: 'Open ticket', desc: t.subject, time: timeAgo(t.created_at) }));
       setNotifications(items);
     };
     fetchNotifs();
   }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#07101F', overflow: 'hidden', color: '#cbd5e1', position: 'relative' }}>
@@ -100,9 +120,47 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {navItems.map((item) => {
+        {/* User Profile + Collapsible Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          
+          {/* User Section Header */}
+          <button
+            onClick={() => setNavOpen(!navOpen)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 14px', borderRadius: 12,
+              background: 'rgba(52,211,153,0.06)',
+              border: '1px solid rgba(52,211,153,0.12)',
+              cursor: 'pointer', width: '100%', textAlign: 'left',
+              marginBottom: 8,
+            }}
+          >
+            <div style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #1e293b, #334155)',
+              border: '2px solid rgba(52,211,153,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <User style={{ width: 18, height: 18, color: '#34d399' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userName || 'Loading...'}
+              </div>
+              <div style={{ fontSize: 10, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userEmail}
+              </div>
+            </div>
+            <ChevronDown style={{
+              width: 16, height: 16, color: '#64748b', flexShrink: 0,
+              transform: navOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+              transition: 'transform 0.2s',
+            }} />
+          </button>
+
+          {/* Nav Items */}
+          {navOpen && navItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
@@ -114,10 +172,11 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
-                  padding: '10px 14px',
+                  padding: '9px 14px',
+                  paddingLeft: 24,
                   borderRadius: 10,
                   textDecoration: 'none',
-                  fontSize: 13.5,
+                  fontSize: 13,
                   fontWeight: isActive ? 600 : 500,
                   color: isActive ? '#34d399' : '#94a3b8',
                   background: isActive ? 'rgba(59,130,246,0.08)' : 'transparent',
@@ -137,7 +196,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                   }
                 }}
               >
-                <Icon style={{ width: 18, height: 18, color: isActive ? '#34d399' : '#64748b' }} />
+                <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : '#64748b' }} />
                 <span>{item.name}</span>
                 {isActive && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
               </Link>
@@ -145,20 +204,23 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
         
-        {/* Merchant Profile */}
-        <div style={{ margin: '0 16px 16px', padding: 14, borderRadius: 12, border: '1px solid rgba(51,65,85,0.5)', background: 'rgba(15,23,42,0.6)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #1e293b, #334155)', border: '1px solid #475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>M</span>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Merchant Setup</div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#34d399', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
-                Starter Plan
-              </div>
-            </div>
-          </div>
+        {/* Logout Button at Bottom */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(51,65,85,0.4)' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '10px 14px', borderRadius: 10, border: 'none',
+              background: 'rgba(239,68,68,0.06)',
+              color: '#f87171', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
+          >
+            <LogOut style={{ width: 16, height: 16 }} />
+            <span>Log Out</span>
+          </button>
         </div>
       </aside>
 
@@ -191,7 +253,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowNotif(!showNotif)}
-                style={{ position: 'relative', color: '#94a3b8', background: showNotif ? 'rgba(51,65,85,0.4)' : 'none', border: 'none', padding: 8, borderRadius: 999, transition: 'all 0.2s' }}
+                style={{ position: 'relative', color: '#94a3b8', background: showNotif ? 'rgba(51,65,85,0.4)' : 'none', border: 'none', padding: 8, borderRadius: 999, transition: 'all 0.2s', cursor: 'pointer' }}
               >
                 <Bell style={{ width: 20, height: 20 }} />
                 {notifications.length > 0 && <span style={{ position: 'absolute', top: 6, right: 7, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px rgba(239,68,68,0.7)' }} />}
@@ -234,11 +296,14 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
             </div>
             
             <div style={{ width: 1, height: 24, background: '#1e293b' }} />
-            
-            <button style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#94a3b8', background: 'none', border: 'none', padding: '6px 12px', borderRadius: 8, transition: 'all 0.2s' }}>
-              <LogOut style={{ width: 16, height: 16 }} />
-              Log out
-            </button>
+
+            {/* User info in topbar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #1e293b, #334155)', border: '1px solid #475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{userName?.charAt(0)?.toUpperCase() || 'U'}</span>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{userName}</span>
+            </div>
           </div>
         </header>
 
