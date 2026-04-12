@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Users, Plus, Pencil, Trash2, X, Search, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search, Phone, Mail, MapPin } from 'lucide-react';
 
 type Customer = { id: string; name: string; email: string; phone: string; city: string; notes: string; total_orders: number; total_spent: number; created_at: string };
 
@@ -15,6 +15,7 @@ export default function CRMPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', notes: '' });
 
   const fetch_ = async () => { const { data } = await supabase.from('customers').select('*').order('created_at', { ascending: false }); setCustomers(data || []); setLoading(false); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetch_(); }, []);
 
   const handleSubmit = async () => {

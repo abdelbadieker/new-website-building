@@ -8,6 +8,7 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalCustomers: 0, ordersByStatus: {} as Record<string, number> });
   const [loading, setLoading] = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const fetchStats = async () => {
       const [ordersRes, productsRes, customersRes] = await Promise.all([

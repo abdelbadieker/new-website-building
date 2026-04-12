@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Truck, Package, CheckCircle, Clock, ArrowRight } from 'lucide-react';
+import { Truck, Package, CheckCircle, Clock } from 'lucide-react';
 
 type Order = { id: string; customer_name: string; status: string; total: number; city: string; address: string; tracking_code: string; created_at: string };
 const stages = ['Processing', 'Confirmed', 'Shipped', 'Delivered'];
@@ -12,6 +12,7 @@ export default function FulfillmentPage() {
   const [loading, setLoading] = useState(true);
 
   const fetch_ = async () => { const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }); setOrders(data || []); setLoading(false); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetch_(); }, []);
 
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 20 } as React.CSSProperties };

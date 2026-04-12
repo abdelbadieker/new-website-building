@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Globe, Layout, Eye, Smartphone, Monitor, Palette } from 'lucide-react';
+import { Layout, Eye, Smartphone, Monitor, Palette } from 'lucide-react';
 
 const themes = [
   { name: 'Modern Dark', preview: '#0f172a', accent: '#34d399' },

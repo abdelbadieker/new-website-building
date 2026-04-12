@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { BarChart3, Package, Users, ShoppingBag, ArrowUpRight, DollarSign, HelpCircle, Activity } from 'lucide-react';
+import { Package, Users, ShoppingBag, ArrowUpRight, DollarSign, Activity } from 'lucide-react';
 
 export default function OverviewPage() {
   const supabase = createClient();
   const [stats, setStats] = useState({ revenue: 0, orders: 0, products: 0, customers: 0, openTickets: 0, recentOrders: [] as { customer_name: string; total: number; status: string; tracking_code: string }[] });
   const [loading, setLoading] = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const fetch_ = async () => {
       const [o, p, c, t] = await Promise.all([

@@ -13,6 +13,7 @@ export default function EStorePage() {
   const [storeTheme, setStoreTheme] = useState<'dark' | 'light'>('dark');
   const [showPreview, setShowPreview] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { supabase.from('products').select('*').eq('is_active', true).then(({ data }) => { setProducts(data || []); setLoading(false); }); }, []);
 
   const toggleProduct = async (id: string, active: boolean) => { await supabase.from('products').update({ is_active: !active }).eq('id', id); const { data } = await supabase.from('products').select('*'); setProducts(data || []); };

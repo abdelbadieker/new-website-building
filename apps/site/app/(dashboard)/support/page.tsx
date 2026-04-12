@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { HelpCircle, Plus, X, MessageSquare, Clock, CheckCircle } from 'lucide-react';
+import { Plus, X, MessageSquare, Clock, CheckCircle } from 'lucide-react';
 
 type Ticket = { id: string; subject: string; message: string; status: string; priority: string; admin_reply: string | null; user_email: string; created_at: string };
 
@@ -16,6 +16,7 @@ export default function SupportPage() {
   const [form, setForm] = useState({ subject: '', message: '', priority: 'Medium', user_email: '' });
 
   const fetch_ = async () => { const { data } = await supabase.from('support_tickets').select('*').order('created_at', { ascending: false }); setTickets(data || []); setLoading(false); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetch_(); }, []);
 
   const handleSubmit = async () => {

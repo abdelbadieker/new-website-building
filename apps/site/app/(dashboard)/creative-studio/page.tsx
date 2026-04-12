@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Paintbrush, Download, Palette, Type, Square, Image } from 'lucide-react';
+import { Paintbrush, Download, Palette, Type, Image } from 'lucide-react';
 
 const templates = [
   { name: 'Flash Sale Banner', category: 'Marketing', colors: ['#ef4444', '#fbbf24', '#f97316'] },

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Package, Plus, Pencil, Trash2, X, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 
 type Product = { id: string; name: string; price: number; stock: number; image_url: string | null; description: string | null; category: string; is_active: boolean; created_at: string };
 
@@ -20,6 +20,7 @@ export default function ProductsPage() {
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchProducts(); }, []);
 
   const handleSubmit = async () => {

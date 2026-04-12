@@ -13,6 +13,7 @@ export default function AIChatbotPage() {
   const [botResponses, setBotResponses] = useState<BotResponse[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.from('chatbot_responses').select('*').eq('is_active', true).then(({ data }) => setBotResponses(data || []));
   }, []);

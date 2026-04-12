@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ShoppingBag, Plus, Eye, X, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Plus, Eye, X, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 type Order = { id: string; customer_name: string; customer_email: string; customer_phone: string; status: string; total: number; city: string; address: string; tracking_code: string; notes: string; created_at: string };
 
@@ -35,6 +35,7 @@ export default function OrdersPage() {
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchOrders(); }, []);
 
   const handleSubmit = async () => {

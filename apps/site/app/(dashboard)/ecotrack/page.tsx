@@ -14,6 +14,7 @@ export default function EcotrackPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Order | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data }) => { setOrders(data || []); setLoading(false); });
   }, []);
