@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CustomCursor } from '@/components/CustomCursor';
 import { Bot, Package, ShoppingBag, Users, BarChart3, Truck, Star } from 'lucide-react';
+import { PartnershipsMarquee } from '@/components/PartnershipsMarquee';
 
 export default function LandingPage() {
   return (
@@ -82,6 +83,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <PartnershipsMarquee />
+
       {/* INTEGRATIONS */}
       <div className="integ-section">
         <div className="integ-inner">
@@ -148,7 +151,7 @@ export default function LandingPage() {
             Everything You Need
           </p>
           <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight font-poppins">
-            Six tools. <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-200">One platform.</span><br/>
+            All tools. <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-200">One platform.</span><br/>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-300">Zero fragmentation.</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -234,7 +237,7 @@ export default function LandingPage() {
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-10">
             Hundreds of Algerian businesses are saving time and scaling their revenue using EcoMate.
           </p>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all shadow-xl">
+          <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all shadow-xl">
             <Star className="w-4 h-4 text-emerald-400" fill="currentColor" />
             Submit a Review from Dashboard
           </Link>

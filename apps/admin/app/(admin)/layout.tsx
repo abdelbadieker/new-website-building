@@ -10,7 +10,7 @@ const navItems = [
   { name: 'Landing CMS', href: '/landing-cms', icon: '📝' },
   { name: 'Reviews', href: '/reviews', icon: '⭐' },
   { name: 'Contact Manager', href: '/contact-manager', icon: '📞' },
-  { name: 'Partner Sync', href: '/partner-sync', icon: '🔗' },
+  { name: 'Partnerships', href: '/partnerships', icon: '🔗' },
   { name: 'Chatbot Control', href: '/chatbot-control', icon: '🤖' },
   { name: 'Activity Logs', href: '/activity-logs', icon: '📜' },
   { name: 'Data Export', href: '/data-export', icon: '📤' },
