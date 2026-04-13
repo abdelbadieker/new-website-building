@@ -52,11 +52,24 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    // Fetch user
-    supabase.auth.getUser().then(({ data }) => {
+    // Fetch user and check ban status
+    supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, is_banned')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.is_banned) {
+          alert('Your account has been restricted by the administrator.');
+          await supabase.auth.signOut();
+          window.location.href = '/';
+          return;
+        }
+
         const meta = data.user.user_metadata;
-        const name = meta?.full_name || meta?.name || data.user.email?.split('@')[0] || 'User';
+        const name = profile?.full_name || meta?.full_name || meta?.name || data.user.email?.split('@')[0] || 'User';
         setUserName(name);
         setUserEmail(data.user.email || '');
       }

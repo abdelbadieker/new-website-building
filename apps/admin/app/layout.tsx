@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
   { name: 'Merchants', href: '/merchants', icon: '👥' },
+  { name: 'User Management', href: '/users', icon: '🛡️' },
   { name: 'CRM Import', href: '/crm-import', icon: '📤' },
   { name: 'Feature Toggles', href: '/feature-toggles', icon: '⚙️' },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: '🚚' },
