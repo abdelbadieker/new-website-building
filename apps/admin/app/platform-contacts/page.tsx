@@ -53,6 +53,21 @@ export default function ContactsManagement() {
     fetchContacts();
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  const handleEditSave = async (id: string) => {
+    setSaving(true);
+    const { error } = await supabase.from('platform_contacts').update({ value: editValue }).eq('id', id);
+    if (error) {
+      alert('Error updating contact: ' + error.message);
+    } else {
+      setEditingId(null);
+      fetchContacts();
+    }
+    setSaving(false);
+  };
+
   if (loading) return <div className="flex justify-center p-20"><div className="w-8 h-8 border-[3px] border-slate-700 border-t-emerald-400 rounded-full animate-spin" /></div>;
 
   return (
@@ -109,19 +124,41 @@ export default function ContactsManagement() {
             <div className="p-8 text-center text-slate-500 italic">No contact info added yet.</div>
           ) : contacts.map(c => (
             <div key={c.id} className="p-6 flex items-center justify-between hover:bg-slate-800/10 transition-colors">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
                   {c.type === 'phone' && <Phone size={18} />}
                   {c.type === 'email' && <Mail size={18} />}
                   {c.type === 'whatsapp' && <MessageSquare size={18} />}
                   {c.type === 'address' && <MapPin size={18} />}
                 </div>
-                <div>
-                  <div className="text-white font-bold">{c.value}</div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">{c.type}</div>
+                <div className="flex-1">
+                  {editingId === c.id ? (
+                    <div className="flex gap-2">
+                      <input 
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        className="bg-[#07101F] border border-slate-700 rounded-lg px-3 py-1 text-white text-sm outline-none focus:border-blue-500 w-full"
+                      />
+                      <button onClick={() => handleEditSave(c.id)} className="text-emerald-400 hover:text-emerald-300"><CheckCircle2 size={18}/></button>
+                      <button onClick={() => setEditingId(null)} className="text-slate-500 hover:text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-white font-bold">{c.value}</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">{c.type}</div>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {editingId !== c.id && (
+                  <button 
+                    onClick={() => { setEditingId(c.id); setEditValue(c.value); }}
+                    className="p-2 text-slate-500 hover:text-blue-400 transition-all"
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                )}
                 <button 
                   onClick={() => toggleActive(c.id, c.is_active)}
                   className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all ${c.is_active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}
