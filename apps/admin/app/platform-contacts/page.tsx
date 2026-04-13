@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Phone, Mail, MessageSquare, MapPin, Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MapPin, Plus, Trash2, CheckCircle2, Loader2, Edit3 } from 'lucide-react';
 
 function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
