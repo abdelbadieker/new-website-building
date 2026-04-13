@@ -33,7 +33,9 @@ export default function ContactsManagement() {
     e.preventDefault();
     setSaving(true);
     const { error } = await supabase.from('platform_contacts').insert(newContact);
-    if (!error) {
+    if (error) {
+      alert('Error saving contact: ' + error.message);
+    } else {
       setNewContact({ type: 'phone', value: '' });
       fetchContacts();
     }
