@@ -19,12 +19,12 @@ type PlatformContact = {
   is_active: boolean;
 };
 
-const ICON_MAP = {
+const ICON_MAP: Record<string, any> = {
   phone: Phone,
   email: Mail,
   whatsapp: MessageSquare,
   address: MapPin,
-} as any;
+};
 
 export default function PlatformContactsPage() {
   const [contacts, setContacts] = useState<PlatformContact[]>([]);
