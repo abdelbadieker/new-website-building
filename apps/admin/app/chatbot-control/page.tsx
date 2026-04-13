@@ -27,6 +27,35 @@ export default function ChatbotControl() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetch_(); fetchDemo(); }, []);
 
+  const handleUploadVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `chatbot-demos/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from('platform-assets')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('platform-assets')
+        .getPublicUrl(filePath);
+
+      setDemoForm({ ...demoForm, video_url: publicUrl });
+      alert('Video uploaded successfully!');
+    } catch (error: any) {
+      alert('Error uploading video: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSaveDemo = async () => {
     if (!demoForm.video_url.trim()) return;
     if (demo) {
@@ -82,11 +111,44 @@ export default function ChatbotControl() {
           <p className="text-slate-500 text-sm">No demo video set yet. Clients will see a placeholder message.</p>
         )}
         {showDemoForm && (
-          <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
-            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Video URL</label><input value={demoForm.video_url} onChange={e => setDemoForm({ ...demoForm, video_url: e.target.value })} placeholder="https://..." className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" /></div>
-            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Title</label><input value={demoForm.title} onChange={e => setDemoForm({ ...demoForm, title: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" /></div>
-            <div><label className="block text-xs text-slate-400 mb-1 font-medium">Description</label><textarea value={demoForm.description} onChange={e => setDemoForm({ ...demoForm, description: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm min-h-[60px] resize-y" /></div>
-            <button onClick={handleSaveDemo} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm">Save Demo Video</button>
+          <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1 font-medium">Video URL / Source</label>
+              <div className="flex gap-2">
+                <input 
+                  value={demoForm.video_url} 
+                  onChange={e => setDemoForm({ ...demoForm, video_url: e.target.value })} 
+                  placeholder="https://..." 
+                  className="flex-1 bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" 
+                />
+                <label className="relative cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                  {uploading ? 'Uploading...' : 'Import Video'}
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="video/*" 
+                    disabled={uploading}
+                    onChange={handleUploadVideo}
+                  />
+                </label>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">Provide a URL or upload a video file directly.</p>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1 font-medium">Title</label>
+              <input value={demoForm.title} onChange={e => setDemoForm({ ...demoForm, title: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1 font-medium">Description</label>
+              <textarea value={demoForm.description} onChange={e => setDemoForm({ ...demoForm, description: e.target.value })} className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm min-h-[60px] resize-y" />
+            </div>
+            <button 
+              onClick={handleSaveDemo} 
+              disabled={uploading}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)] disabled:opacity-50"
+            >
+              Save Demo & Publish
+            </button>
           </div>
         )}
       </div>

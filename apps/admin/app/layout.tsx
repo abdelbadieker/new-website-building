@@ -20,6 +20,7 @@ const navItems = [
   { name: 'Support Tickets', href: '/subscriptions', icon: '🎫' },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: '🚚' },
   { name: 'Landing CMS', href: '/landing-cms', icon: '📝' },
+  { name: 'Platform Contacts', href: '/platform-contacts', icon: '🏢' },
   { name: 'Reviews', href: '/reviews', icon: '⭐' },
   { name: 'Contact Manager', href: '/contact-manager', icon: '📞' },
   { name: 'Partnerships', href: '/partnerships', icon: '🔗' },

@@ -4,6 +4,8 @@ import { Bot, Package, ShoppingBag, Users, BarChart3, Truck } from 'lucide-react
 import { PartnershipsMarquee } from '@/components/PartnershipsMarquee';
 import { AuthNav } from '@/components/AuthNav';
 import { ReviewsSection } from '@/components/ReviewsSection';
+import { ChatbotDemoSection } from '@/components/ChatbotDemoSection';
+import { ContactSection } from '@/components/ContactSection';
 
 export default function LandingPage() {
   return (
@@ -113,6 +115,8 @@ export default function LandingPage() {
           <div className="pw-item"><span className="pw-chip">🔒&nbsp;<span className="pw-chip-val w">End-to-end</span>&nbsp;data security</span></div><div className="pw-sep"></div>
         </div>
       </div>
+
+      <ChatbotDemoSection />
 
       {/* FEATURES BENTO (REVAMPED) */}
       <section id="features" className="py-32 px-5 relative bg-[#0a1628] rounded-b-[40px]">
@@ -278,7 +282,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-
+      <ContactSection />
 
       {/* CTA */}
       <section id="cta">
