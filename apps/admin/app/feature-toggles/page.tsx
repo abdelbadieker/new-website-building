@@ -39,12 +39,19 @@ export default function FeatureToggles() {
     // Update locally first for snappy UI
     setProfiles(profiles.map(p => p.id === profileId ? { ...p, features: newFeatures } : p));
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ features: newFeatures })
-      .eq('id', profileId);
-
-    if (error) {
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: profileId, features: newFeatures })
+      });
+      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to update features');
+      
+      console.log("Features updated successfully");
+    } catch (error: any) {
+      console.error("Feature Error:", error);
       alert('Error updating feature: ' + error.message);
       fetchProfiles(); // Rollback
     }
