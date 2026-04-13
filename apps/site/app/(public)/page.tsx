@@ -17,6 +17,7 @@ export default function LandingPage() {
           <li><a href="#features">Features</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#how">How It Works</a></li>
+          <li><a href="#contact">Contact Us</a></li>
         </ul>
         <div className="nr">
           <ThemeToggle />

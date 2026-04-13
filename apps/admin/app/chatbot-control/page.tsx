@@ -16,6 +16,7 @@ export default function ChatbotControl() {
   const [demo, setDemo] = useState<Demo | null>(null);
   const [demoForm, setDemoForm] = useState({ video_url: '', title: 'AI Chatbot Demo', description: '' });
   const [showDemoForm, setShowDemoForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const fetch_ = async () => { const { data } = await supabase.from('chatbot_responses').select('*').order('created_at', { ascending: false }); setResponses(data || []); setLoading(false); };
   const fetchDemo = async () => {

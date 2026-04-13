@@ -14,20 +14,12 @@ export const metadata: Metadata = {
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊' },
   { name: 'Merchants', href: '/merchants', icon: '👥' },
-  { name: 'Orders', href: '/orders', icon: '📦' },
-  { name: 'Products', href: '/products', icon: '🛍️' },
+  { name: 'CRM Import', href: '/crm-import', icon: '📤' },
   { name: 'Feature Toggles', href: '/feature-toggles', icon: '⚙️' },
-  { name: 'Support Tickets', href: '/subscriptions', icon: '🎫' },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: '🚚' },
-  { name: 'Landing CMS', href: '/landing-cms', icon: '📝' },
   { name: 'Platform Contacts', href: '/platform-contacts', icon: '🏢' },
-  { name: 'Reviews', href: '/reviews', icon: '⭐' },
-  { name: 'Contact Manager', href: '/contact-manager', icon: '📞' },
-  { name: 'Partnerships', href: '/partnerships', icon: '🔗' },
   { name: 'Chatbot Control', href: '/chatbot-control', icon: '🤖' },
-  { name: 'Partner Sync', href: '/partner-sync', icon: '🔄' },
   { name: 'Activity Logs', href: '/activity-logs', icon: '📜' },
-  { name: 'Data Export', href: '/data-export', icon: '📤' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

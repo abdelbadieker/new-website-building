@@ -12,6 +12,12 @@ export default function BillingPage() {
   const [currentPlan] = useState('Starter');
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 24 } as React.CSSProperties };
 
+  const handleUpgrade = (planName: string) => {
+    const whatsappNumber = "213555123456"; // Managed via Admin Platform Contacts
+    const message = encodeURIComponent(`Hi EcoMate Team! I'd like to upgrade my account to the ${planName} plan. My current plan is ${currentPlan}.`);
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div><h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9' }}>Billing & Subscription</h1><p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Manage your plan and payment methods</p></div>
@@ -49,7 +55,9 @@ export default function BillingPage() {
                   </div>
                 ))}
               </div>
-              <button style={{ width: '100%', marginTop: 20, padding: '12px 0', borderRadius: 10, border: isCurrent ? '1px solid #334155' : 'none', background: isCurrent ? 'transparent' : `linear-gradient(135deg, ${plan.color}, ${plan.color}cc)`, color: isCurrent ? '#64748b' : '#fff', fontWeight: 700, fontSize: 14, cursor: isCurrent ? 'default' : 'pointer' }}>
+              <button 
+                onClick={() => !isCurrent && handleUpgrade(plan.name)}
+                style={{ width: '100%', marginTop: 20, padding: '12px 0', borderRadius: 10, border: isCurrent ? '1px solid #334155' : 'none', background: isCurrent ? 'transparent' : `linear-gradient(135deg, ${plan.color}, ${plan.color}cc)`, color: isCurrent ? '#64748b' : '#fff', fontWeight: 700, fontSize: 14, cursor: isCurrent ? 'default' : 'pointer' }}>
                 {isCurrent ? 'Current Plan' : 'Upgrade'}
               </button>
             </div>
