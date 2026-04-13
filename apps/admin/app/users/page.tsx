@@ -44,12 +44,21 @@ export default function UserManagement() {
   };
 
   const handlePlanChange = async (id: string, plan: string) => {
+    console.log(`Attempting to change plan for ${id} to ${plan}`);
     setProcessingId(id);
+    
+    // Debug: log current session
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Current user:", session?.user?.email);
+
     const { error } = await supabase.from('profiles').update({ plan }).eq('id', id);
+    
     if (error) {
-      alert('Error updating plan: ' + error.message);
+      console.error("Supabase Error:", error);
+      alert('Error updating plan: ' + error.message + ' (Code: ' + error.code + ')');
     } else {
-      fetchUsers();
+      console.log("Plan updated successfully");
+      await fetchUsers();
     }
     setProcessingId(null);
   };
