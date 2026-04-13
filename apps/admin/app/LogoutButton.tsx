@@ -1,20 +1,28 @@
-'use client';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function LogoutButton() {
-  const handleLogout = () => {
-    // 1. Clear all storage levels aggressively
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const handleLogout = async () => {
+    // 1. Properly revoke session server-side
+    await supabase.auth.signOut();
+
+    // 2. Clear all storage levels aggressively
     if (typeof window !== 'undefined') {
       localStorage.clear();
       sessionStorage.clear();
       
-      // 2. Clear common auth cookies manually
+      // 3. Clear common auth cookies manually as a fallback
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
 
-      // 3. Hardware redirect to login to bypass Next.js client routing cache
+      // 4. Hardware redirect to login to bypass Next.js client routing cache
       window.location.replace('/login');
     }
   };

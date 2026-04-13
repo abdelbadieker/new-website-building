@@ -26,6 +26,7 @@ export default function PartnershipsPage() {
   const [content, setContent] = useState('');
   const [isEmoji, setIsEmoji] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const supabase = createClient();
 
@@ -42,23 +43,55 @@ export default function PartnershipsPage() {
     setLoading(false);
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleAddOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
     
-    const { error } = await supabase.from('partnerships').insert([
-      { name, is_emoji: isEmoji, content }
-    ]);
-    
-    if (!error) {
-      setName('');
-      setContent('');
-      setIsEmoji(true);
-      await fetchPartners();
+    if (editingId) {
+      const { error } = await supabase
+        .from('partnerships')
+        .update({ name, is_emoji: isEmoji, content })
+        .eq('id', editingId);
+      
+      if (!error) {
+        setEditingId(null);
+        setName('');
+        setContent('');
+        setIsEmoji(true);
+        await fetchPartners();
+      } else {
+        alert('Error updating partner: ' + error.message);
+      }
     } else {
-      alert('Error adding partner: ' + error.message);
+      const { error } = await supabase.from('partnerships').insert([
+        { name, is_emoji: isEmoji, content }
+      ]);
+      
+      if (!error) {
+        setName('');
+        setContent('');
+        setIsEmoji(true);
+        await fetchPartners();
+      } else {
+        alert('Error adding partner: ' + error.message);
+      }
     }
     setAdding(false);
+  };
+
+  const startEdit = (partner: Partner) => {
+    setEditingId(partner.id);
+    setName(partner.name);
+    setContent(partner.content);
+    setIsEmoji(partner.is_emoji);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setName('');
+    setContent('');
+    setIsEmoji(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -80,8 +113,8 @@ export default function PartnershipsPage() {
       </div>
 
       <div className="bg-[#0A1628] border border-slate-800 rounded-xl p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4">Add New Partner</h2>
-        <form onSubmit={handleAdd} className="space-y-4">
+          <h2 className="text-lg font-semibold mb-4">{editingId ? 'Edit Partner' : 'Add New Partner'}</h2>
+        <form onSubmit={handleAddOrUpdate} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1">Company/Partner Name</label>
             <input 
@@ -117,13 +150,24 @@ export default function PartnershipsPage() {
             />
           </div>
 
-          <button 
-            type="submit" 
-            disabled={adding}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-          >
-            {adding ? 'Adding...' : 'Add Partner'}
-          </button>
+          <div className="flex gap-3">
+            <button 
+              type="submit" 
+              disabled={adding}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {adding ? 'Saving...' : editingId ? 'Update Partner' : 'Add Partner'}
+            </button>
+            {editingId && (
+              <button 
+                type="button"
+                onClick={cancelEdit}
+                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -161,7 +205,13 @@ export default function PartnershipsPage() {
                   <td className="px-6 py-4 text-slate-400 text-sm">
                     {partner.is_emoji ? 'Emoji' : 'Image URL'}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right space-x-3">
+                    <button 
+                      onClick={() => startEdit(partner)}
+                      className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium px-3 py-1 bg-blue-400/10 rounded-md"
+                    >
+                      Edit
+                    </button>
                     <button 
                       onClick={() => handleDelete(partner.id)}
                       className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium px-3 py-1 bg-red-400/10 rounded-md"
