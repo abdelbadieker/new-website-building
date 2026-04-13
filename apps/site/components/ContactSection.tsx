@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Phone, Mail, MessageSquare, MapPin } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MapPin, LucideIcon } from 'lucide-react';
 
 interface PlatformContact {
   id: string;
@@ -12,7 +12,7 @@ interface PlatformContact {
   is_active: boolean;
 }
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   phone: Phone,
   email: Mail,
   whatsapp: MessageSquare,

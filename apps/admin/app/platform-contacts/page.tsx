@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Phone, Mail, MessageSquare, MapPin, Trash2, Edit2, Plus, Save, X } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MapPin, Trash2, Edit2, Plus, Save, X, LucideIcon } from 'lucide-react';
 
 function createClient() {
   return createBrowserClient(
@@ -19,7 +19,7 @@ type PlatformContact = {
   is_active: boolean;
 };
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   phone: Phone,
   email: Mail,
   whatsapp: MessageSquare,
