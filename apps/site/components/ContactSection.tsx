@@ -78,7 +78,7 @@ export function ContactSection() {
             Join the leading merchants in Algeria who are already using EcoMate to scale their operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/register" className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold hover:shadow-lg transition-all">Start Your Free Trial</a>
+            <a href="/register" className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold hover:shadow-lg transition-all">Get Started Now</a>
             <a href="#how" className="bg-blue-700/50 text-white border border-blue-400/30 px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition-all">How it works</a>
           </div>
         </div>
