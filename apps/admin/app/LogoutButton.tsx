@@ -9,22 +9,22 @@ export default function LogoutButton() {
   );
 
   const handleLogout = async () => {
-    // 1. Properly revoke session server-side
-    await supabase.auth.signOut();
+    try {
+      // 1. Call server-side logout to clear HttpOnly admin_token cookie
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      
+      // 2. Properly revoke session if Supabase was also used
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
 
-    // 2. Clear all storage levels aggressively
+    // 3. Clear all storage levels aggressively
     if (typeof window !== 'undefined') {
       localStorage.clear();
       sessionStorage.clear();
       
-      // 3. Clear common auth cookies manually as a fallback
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-
-      // 4. Hardware redirect to login to bypass Next.js client routing cache
+      // 4. Hardware redirect to login
       window.location.replace('/login');
     }
   };
