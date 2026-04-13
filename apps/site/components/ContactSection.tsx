@@ -29,11 +29,18 @@ export function ContactSection() {
       .select('*')
       .eq('is_active', true)
       .then(({ data }) => {
-        if (data) setContacts(data);
+        if (data && data.length > 0) {
+          setContacts(data);
+        } else {
+          // Fallback data if DB is empty
+          setContacts([
+            { id: '1', type: 'phone', value: '+213 555 00 00 00', icon: 'phone', is_active: true },
+            { id: '2', type: 'email', value: 'support@ecomate.dz', icon: 'email', is_active: true },
+            { id: '3', type: 'whatsapp', value: '+213 555 11 11 11', icon: 'whatsapp', is_active: true }
+          ]);
+        }
       });
   }, [supabase]);
-
-  if (contacts.length === 0) return null;
 
   return (
     <section id="contact" className="py-24 bg-[#07101F] relative overflow-hidden">

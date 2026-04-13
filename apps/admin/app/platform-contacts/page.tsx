@@ -1,222 +1,141 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Phone, Mail, MessageSquare, MapPin, Trash2, Edit2, Plus, Save, X, LucideIcon } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MapPin, Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 
-function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
-type PlatformContact = {
+type Contact = {
   id: string;
   type: string;
   value: string;
-  icon: string;
   is_active: boolean;
 };
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  phone: Phone,
-  email: Mail,
-  whatsapp: MessageSquare,
-  address: MapPin,
-};
-
-export default function PlatformContactsPage() {
-  const [contacts, setContacts] = useState<PlatformContact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  
-  const [form, setForm] = useState({
-    type: 'phone',
-    value: '',
-    icon: 'Phone',
-    is_active: true
-  });
-
+export default function ContactsManagement() {
   const supabase = createClient();
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [newContact, setNewContact] = useState({ type: 'phone', value: '' });
+
+  const fetchContacts = async () => {
+    const { data } = await supabase.from('platform_contacts').select('*').order('created_at', { ascending: false });
+    setContacts(data || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchContacts();
   }, []);
 
-  const fetchContacts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('platform_contacts')
-      .select('*')
-      .order('created_at', { ascending: true });
-    
-    if (!error && data) {
-      setContacts(data);
-    }
-    setLoading(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      const { error } = await supabase
-        .from('platform_contacts')
-        .update(form)
-        .eq('id', editingId);
-      
-      if (!error) {
-        setEditingId(null);
-        fetchContacts();
-      }
-    } else {
-      const { error } = await supabase
-        .from('platform_contacts')
-        .insert([form]);
-      
-      if (!error) {
-        setShowAddForm(false);
-        setForm({ type: 'phone', value: '', icon: 'Phone', is_active: true });
-        fetchContacts();
-      }
+    setSaving(true);
+    const { error } = await supabase.from('platform_contacts').insert(newContact);
+    if (!error) {
+      setNewContact({ type: 'phone', value: '' });
+      fetchContacts();
     }
+    setSaving(false);
   };
 
-  const startEdit = (contact: PlatformContact) => {
-    setEditingId(contact.id);
-    setForm({
-      type: contact.type,
-      value: contact.value,
-      icon: contact.icon,
-      is_active: contact.is_active
-    });
-    setShowAddForm(false);
+  const toggleActive = async (id: string, currentStatus: boolean) => {
+    await supabase.from('platform_contacts').update({ is_active: !currentStatus }).eq('id', id);
+    fetchContacts();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this contact?')) return;
-    const { error } = await supabase.from('platform_contacts').delete().eq('id', id);
-    if (!error) fetchContacts();
+  const deleteContact = async (id: string) => {
+    if (!confirm('Are you sure?')) return;
+    await supabase.from('platform_contacts').delete().eq('id', id);
+    fetchContacts();
   };
 
-  if (loading && contacts.length === 0) {
-    return (
-      <div className="flex justify-center p-20">
-        <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center p-20"><div className="w-8 h-8 border-[3px] border-slate-700 border-t-emerald-400 rounded-full animate-spin" /></div>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Platform Contacts</h1>
-          <p className="text-slate-400">Manage the contact information shown on your landing page.</p>
-        </div>
-        <button 
-          onClick={() => { setShowAddForm(!showAddForm); setEditingId(null); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          {showAddForm ? 'Cancel' : 'Add Contact'}
-        </button>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div>
+        <h2 className="text-3xl font-extrabold text-white">Platform Contact Info</h2>
+        <p className="text-slate-400 mt-2">Manage what users see when they click "Contact Us" on the landing page.</p>
       </div>
 
-      {(showAddForm || editingId) && (
-        <div className="bg-[#0A1628] border border-slate-800 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">{editingId ? 'Edit Contact' : 'New Contact'}</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Type</label>
-                <select 
-                  value={form.type}
-                  onChange={(e) => setForm({...form, type: e.target.value, icon: e.target.value === 'whatsapp' ? 'MessageSquare' : e.target.value === 'phone' ? 'Phone' : e.target.value === 'email' ? 'Mail' : 'MapPin'})}
-                  className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
-                >
-                  <option value="phone">Phone</option>
-                  <option value="email">Email</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="address">Address</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Value</label>
-                <input 
-                  type="text" 
-                  value={form.value}
-                  onChange={(e) => setForm({...form, value: e.target.value})}
-                  placeholder="+213..."
-                  required
-                  className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="is_active" 
-                checked={form.is_active}
-                onChange={(e) => setForm({...form, is_active: e.target.checked})}
-                className="w-4 h-4 rounded border-slate-700"
-              />
-              <label htmlFor="is_active" className="text-sm font-medium text-slate-400">Show on Website</label>
-            </div>
-            <div className="flex gap-3">
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                {editingId ? 'Update' : 'Save'}
-              </button>
-              {editingId && (
-                <button 
-                  type="button" 
-                  onClick={() => setEditingId(null)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg font-medium"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-      )}
+      <div className="bg-[#0A1628] border border-slate-800 rounded-2xl p-8 shadow-xl">
+        <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+          <Plus className="text-blue-500 w-5 h-5" />
+          Add New Contact Point
+        </h3>
+        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label className="block text-xs text-slate-500 uppercase font-black mb-2">Type</label>
+            <select 
+              value={newContact.type}
+              onChange={e => setNewContact({...newContact, type: e.target.value})}
+              className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 appearance-none"
+            >
+              <option value="phone">Phone Number</option>
+              <option value="email">Email Address</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="address">Physical Address</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 uppercase font-black mb-2">Value</label>
+            <input 
+              required
+              placeholder="+213..."
+              value={newContact.value}
+              onChange={e => setNewContact({...newContact, value: e.target.value})}
+              className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500"
+            />
+          </div>
+          <button 
+            type="submit"
+            disabled={saving}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-[48px] rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            {saving ? <Loader2 className="animate-spin w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+            Save Information
+          </button>
+        </form>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {contacts.map((contact) => {
-          const Icon = ICON_MAP[contact.type as keyof typeof ICON_MAP] || Phone;
-          return (
-            <div key={contact.id} className="bg-[#0A1628] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div className="bg-[#0A1628] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="p-4 border-b border-slate-800 bg-slate-800/20 font-bold text-sm">Active Contacts</div>
+        <div className="divide-y divide-slate-800">
+          {contacts.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 italic">No contact info added yet.</div>
+          ) : contacts.map(c => (
+            <div key={c.id} className="p-6 flex items-center justify-between hover:bg-slate-800/10 transition-colors">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  {c.type === 'phone' && <Phone size={18} />}
+                  {c.type === 'email' && <Mail size={18} />}
+                  {c.type === 'whatsapp' && <MessageSquare size={18} />}
+                  {c.type === 'address' && <MapPin size={18} />}
                 </div>
                 <div>
-                  <div className="font-semibold text-white capitalize">{contact.type}</div>
-                  <div className="text-slate-400 text-sm">{contact.value}</div>
+                  <div className="text-white font-bold">{c.value}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">{c.type}</div>
                 </div>
-                {!contact.is_active && (
-                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Hidden</span>
-                )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => startEdit(contact)}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  onClick={() => toggleActive(c.id, c.is_active)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all ${c.is_active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  {c.is_active ? 'Visible' : 'Hidden'}
                 </button>
                 <button 
-                  onClick={() => handleDelete(contact.id)}
-                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                  onClick={() => deleteContact(c.id)}
+                  className="p-2 text-slate-600 hover:text-red-400 transition-all"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 size={18} />
                 </button>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
