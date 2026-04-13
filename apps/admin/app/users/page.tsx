@@ -33,34 +33,51 @@ export default function UserManagement() {
   }, []);
 
   const handleBanToggle = async (id: string, currentStatus: boolean) => {
+    console.log(`Toggling ban for ${id}`);
     setProcessingId(id);
-    const { error } = await supabase.from('profiles').update({ is_banned: !currentStatus }).eq('id', id);
-    if (error) {
+    
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, is_banned: !currentStatus })
+      });
+      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to update');
+      
+      console.log("Ban toggled successfully");
+      await fetchUsers();
+    } catch (error: any) {
+      console.error("Ban Error:", error);
       alert('Error toggling ban: ' + error.message);
-    } else {
-      fetchUsers();
+    } finally {
+      setProcessingId(null);
     }
-    setProcessingId(null);
   };
 
   const handlePlanChange = async (id: string, plan: string) => {
     console.log(`Attempting to change plan for ${id} to ${plan}`);
     setProcessingId(id);
     
-    // Debug: log current session
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log("Current user:", session?.user?.email);
-
-    const { error } = await supabase.from('profiles').update({ plan }).eq('id', id);
-    
-    if (error) {
-      console.error("Supabase Error:", error);
-      alert('Error updating plan: ' + error.message + ' (Code: ' + error.code + ')');
-    } else {
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, plan })
+      });
+      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to update');
+      
       console.log("Plan updated successfully");
       await fetchUsers();
+    } catch (error: any) {
+      console.error("Update Error:", error);
+      alert('Error updating plan: ' + error.message);
+    } finally {
+      setProcessingId(null);
     }
-    setProcessingId(null);
   };
 
   const handleDelete = async (id: string) => {
