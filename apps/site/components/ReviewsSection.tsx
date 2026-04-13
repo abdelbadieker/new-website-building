@@ -6,8 +6,8 @@ import { Star, Send } from 'lucide-react';
 
 type Review = {
   id: string;
-  user_email: string;
-  user_name: string;
+  email: string;
+  name: string;
   rating: number;
   comment: string;
   is_approved: boolean;
@@ -59,13 +59,20 @@ export function ReviewsSection() {
     if (!comment.trim() || !user) return;
     setSubmitting(true);
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous';
-    await supabase.from('reviews').insert({
-      user_email: user.email,
-      user_name: userName,
+    const { error } = await supabase.from('reviews').insert({
+      email: user.email,
+      name: userName,
       rating,
       comment: comment.trim(),
       is_approved: false,
     });
+
+    if (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(false);
     setSubmitted(true);
     setComment('');
