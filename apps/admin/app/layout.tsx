@@ -3,6 +3,8 @@ import { ReactNode } from 'react';
 import LogoutButton from './LogoutButton';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'EcoMate Admin Dashboard',
   description: 'Manage your merchants and orders',

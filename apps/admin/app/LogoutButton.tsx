@@ -1,24 +1,22 @@
 'use client';
 
 export default function LogoutButton() {
-  const handleLogout = async () => {
-    console.log('Initiating logout...');
-    try {
-      // Force cookie clear via API
   const handleLogout = () => {
-    // 1. Clear all storage levels
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // 2. Clear common auth cookies manually just in case
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
+    // 1. Clear all storage levels aggressively
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // 2. Clear common auth cookies manually
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
 
-    // 3. Hardware redirect to login to bypass any Next.js client routing cache
-    window.location.replace('/login');
+      // 3. Hardware redirect to login to bypass Next.js client routing cache
+      window.location.replace('/login');
+    }
   };
 
   return (
