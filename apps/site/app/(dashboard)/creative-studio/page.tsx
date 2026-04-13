@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText } from 'lucide-react';
 
@@ -20,15 +20,7 @@ export default function CreativeStudioPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.email) setUserEmail(data.session.user.email);
-    });
-    fetchBriefs();
-  }, []);
-
-  const fetchBriefs = async () => {
+  const fetchBriefs = useCallback(async () => {
     const { data: session } = await supabase.auth.getSession();
     const email = session.session?.user?.email;
     if (email) {
@@ -36,7 +28,14 @@ export default function CreativeStudioPage() {
       setBriefs(data || []);
     }
     setLoading(false);
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user?.email) setUserEmail(data.session.user.email);
+    });
+    fetchBriefs();
+  }, [supabase.auth, fetchBriefs]);
 
   const handleSubmit = async () => {
     if (!form.description.trim() || !userEmail) return;

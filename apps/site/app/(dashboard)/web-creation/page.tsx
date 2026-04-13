@@ -11,7 +11,6 @@ export default function WebCreationPage() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user?.email) setUserEmail(data.session.user.email);
@@ -20,7 +19,7 @@ export default function WebCreationPage() {
       setPartner(data?.[0] || null);
       setLoading(false);
     });
-  }, []);
+  }, [supabase]);
 
   const handleClick = async () => {
     if (!partner?.url) return;

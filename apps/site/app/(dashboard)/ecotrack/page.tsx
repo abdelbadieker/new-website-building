@@ -14,10 +14,9 @@ export default function EcotrackPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Order | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data }) => { setOrders(data || []); setLoading(false); });
-  }, []);
+  }, [supabase]);
 
   const filtered = orders.filter(o => o.tracking_code?.toLowerCase().includes(search.toLowerCase()) || o.customer_name?.toLowerCase().includes(search.toLowerCase()));
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 20 } as React.CSSProperties };

@@ -37,7 +37,7 @@ export function PartnershipsMarquee() {
           Trusted Logistics & Business Partners
           <span className="w-8 h-[1px] bg-blue-500/30"></span>
         </h3>
-        <p className="text-slate-400 text-sm font-medium">Powering automation across Algeria's top networks</p>
+        <p className="text-slate-400 text-sm font-medium">Powering automation across Algeria&apos;s top networks</p>
       </div>
 
       <div className="relative w-full overflow-hidden flex items-center h-20">

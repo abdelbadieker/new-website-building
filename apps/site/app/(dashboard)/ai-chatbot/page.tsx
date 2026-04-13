@@ -10,13 +10,12 @@ export default function AIChatbotPage() {
   const [demo, setDemo] = useState<Demo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.from('chatbot_demo').select('*').order('created_at', { ascending: false }).limit(1).then(({ data }) => {
       setDemo(data?.[0] || null);
       setLoading(false);
     });
-  }, []);
+  }, [supabase]);
 
   const s = {
     card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 24 } as React.CSSProperties,
