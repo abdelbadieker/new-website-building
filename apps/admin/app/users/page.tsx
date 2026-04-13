@@ -35,14 +35,22 @@ export default function UserManagement() {
   const handleBanToggle = async (id: string, currentStatus: boolean) => {
     setProcessingId(id);
     const { error } = await supabase.from('profiles').update({ is_banned: !currentStatus }).eq('id', id);
-    if (!error) fetchUsers();
+    if (error) {
+      alert('Error toggling ban: ' + error.message);
+    } else {
+      fetchUsers();
+    }
     setProcessingId(null);
   };
 
   const handlePlanChange = async (id: string, plan: string) => {
     setProcessingId(id);
     const { error } = await supabase.from('profiles').update({ plan }).eq('id', id);
-    if (!error) fetchUsers();
+    if (error) {
+      alert('Error updating plan: ' + error.message);
+    } else {
+      fetchUsers();
+    }
     setProcessingId(null);
   };
 
@@ -50,7 +58,11 @@ export default function UserManagement() {
     if (!confirm('Are you absolutely sure? This will delete the merchant profile. Note: Auth record must be manually deleted or handled via Admin API.')) return;
     setProcessingId(id);
     const { error } = await supabase.from('profiles').delete().eq('id', id);
-    if (!error) fetchUsers();
+    if (error) {
+      alert('Error deleting profile: ' + error.message);
+    } else {
+      fetchUsers();
+    }
     setProcessingId(null);
   };
 
