@@ -2,10 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Play, Sparkles, Shield, Zap, MessageSquare, Bot } from 'lucide-react';
+import { Sparkles, Shield, Zap, MessageSquare, Bot } from 'lucide-react';
+
+interface ChatbotDemo {
+  id: string;
+  video_url: string;
+  title: string;
+  description: string;
+}
 
 export function ChatbotDemoSection() {
-  const [demo, setDemo] = useState<any>(null);
+  const [demo, setDemo] = useState<ChatbotDemo | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -38,7 +45,7 @@ export function ChatbotDemoSection() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">happen on autopilot.</span>
             </h2>
             <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-              Our AI Sales Chatbot isn't just a basic responder. It's trained to guide your customers from hello to checkout, handling questions in Algerian Darja, French, and English simultaneously.
+              Our AI Sales Chatbot isn&apos;t just a basic responder. It&apos;s trained to guide your customers from hello to checkout, handling questions in Algerian Darja, French, and English simultaneously.
             </p>
 
             <div className="space-y-6">

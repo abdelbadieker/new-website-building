@@ -4,15 +4,23 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Phone, Mail, MessageSquare, MapPin } from 'lucide-react';
 
-const ICON_MAP = {
+interface PlatformContact {
+  id: string;
+  type: 'phone' | 'email' | 'whatsapp' | 'address';
+  value: string;
+  icon: string;
+  is_active: boolean;
+}
+
+const ICON_MAP: Record<string, any> = {
   phone: Phone,
   email: Mail,
   whatsapp: MessageSquare,
   address: MapPin,
-} as any;
+};
 
 export function ContactSection() {
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<PlatformContact[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
