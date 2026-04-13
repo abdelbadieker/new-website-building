@@ -118,10 +118,10 @@ export function ReviewsSection() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 16, fontWeight: 700, color: '#e2e8f0',
                 }}>
-                  {r.user_name.charAt(0).toUpperCase()}
+                  {r.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main, #f1f5f9)', fontSize: 14 }}>{r.user_name}</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text-main, #f1f5f9)', fontSize: 14 }}>{r.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-sub, #64748b)' }}>
                     {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
