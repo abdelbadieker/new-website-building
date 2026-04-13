@@ -8,6 +8,20 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalProducts: 0, totalCustomers: 0, ordersByStatus: {} as Record<string, number> });
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      const [ordersRes, productsRes, customersRes] = await Promise.all([
+        supabase.from('orders').select('*'),
+        supabase.from('products').select('*'),
+        supabase.from('customers').select('*'),
+      ]);
+      const orders = ordersRes.data || [];
+      const statusCounts: Record<string, number> = {};
+      let revenue = 0;
+      orders.forEach(o => { revenue += o.total || 0; statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+      setStats({ totalRevenue: revenue, totalOrders: orders.length, totalProducts: (productsRes.data || []).length, totalCustomers: (customersRes.data || []).length, ordersByStatus: statusCounts });
+      setLoading(false);
+    };
     fetchStats();
   }, [supabase]);
 
