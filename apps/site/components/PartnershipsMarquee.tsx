@@ -28,33 +28,51 @@ export function PartnershipsMarquee() {
   if (partners.length === 0) return null;
 
   return (
-    <section className="py-20 bg-[#0A1628] border-y border-slate-800/50 overflow-hidden relative">
-      <div className="max-w-7xl mx-auto text-center mb-10 px-5">
-        <p className="text-slate-400 font-medium tracking-widest uppercase text-sm">
-          Trusted by Top Partners & Logistics Networks
-        </p>
+    <section className="py-24 bg-[#0A1628] border-y border-slate-800/40 overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#07101F] to-transparent opacity-50"></div>
+      
+      <div className="max-w-7xl mx-auto text-center mb-12 px-5 relative z-10">
+        <h3 className="text-[#2563EB] font-bold tracking-[0.2em] uppercase text-[10px] mb-3 flex items-center justify-center gap-3">
+          <span className="w-8 h-[1px] bg-blue-500/30"></span>
+          Trusted Logistics & Business Partners
+          <span className="w-8 h-[1px] bg-blue-500/30"></span>
+        </h3>
+        <p className="text-slate-400 text-sm font-medium">Powering automation across Algeria's top networks</p>
       </div>
 
-      <div className="relative w-full overflow-hidden flex">
-        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0A1628] to-transparent z-10 pointer-events-none"></div>
-        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0A1628] to-transparent z-10 pointer-events-none"></div>
+      <div className="relative w-full overflow-hidden flex items-center h-20">
+        <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#0A1628] via-[#0A1628]/80 to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute inset-y-0 right-0 w-48 bg-gradient-to-l from-[#0A1628] via-[#0A1628]/80 to-transparent z-10 pointer-events-none"></div>
 
-        {/* CSS Keyframes for the marquee are already in tailwind config under 'mqani' likely, if not we inline style */}
-        <div className="flex animate-mqani gap-12 w-max items-center pr-12">
-          {/* We duplicate the array to create a seamless loop effect */}
+        <div className="flex animate-mqani gap-16 w-max items-center pr-16 hover:[animation-play-state:paused] transition-all">
+          {/* Triplicating for ultra-seamless high-speed loop */}
           {[...partners, ...partners, ...partners].map((partner, i) => (
-            <div key={i} className="flex items-center gap-3 shrink-0 grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all cursor-default">
-              {partner.is_emoji ? (
-                <span className="text-4xl">{partner.content}</span>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={partner.content} alt={partner.name} className="h-10 object-contain max-w-[150px]" />
-              )}
-              <span className="text-white font-bold text-xl tracking-tight hidden md:inline-block">{partner.name}</span>
+            <div key={i} className="flex items-center gap-4 shrink-0 group transition-all duration-500">
+              <div className="w-12 h-12 rounded-2xl bg-slate-800/30 border border-slate-700/30 flex items-center justify-center group-hover:scale-110 group-hover:border-blue-500/30 transition-all">
+                {partner.is_emoji ? (
+                  <span className="text-2xl">{partner.content}</span>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={partner.content} alt={partner.name} className="h-6 object-contain max-w-[100px] grayscale transition-all group-hover:grayscale-0" />
+                )}
+              </div>
+              <span className="text-slate-400 group-hover:text-white font-bold text-lg tracking-tight transition-colors">
+                {partner.name}
+              </span>
             </div>
           ))}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes mqani {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.33%); }
+        }
+        .animate-mqani {
+          animation: mqani 40s linear infinite;
+        }
+      `}</style>
     </section>
   );
 }
