@@ -15,6 +15,12 @@ export default function MerchantRegister() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  useState(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/overview');
+    });
+  });
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -24,7 +30,7 @@ export default function MerchantRegister() {
       password,
       options: {
         data: {
-          store_name: storeName
+          full_name: storeName, // Using store name as full name for profile sync
         }
       }
     });
@@ -58,7 +64,7 @@ export default function MerchantRegister() {
               </svg>
            </div>
            <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-           <p style={{ color: 'var(--text-sub)' }}>We sent a verification link to <strong>{email}</strong>. Please click it to verify your account and start your 14-day free trial.</p>
+           <p style={{ color: 'var(--text-sub)' }}>We sent a verification link to <strong>{email}</strong>. Please click it to verify your account and get started with EcoMate.</p>
            <button onClick={() => router.push('/login')} className="mt-8 px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
               Go to Login
            </button>
@@ -77,7 +83,7 @@ export default function MerchantRegister() {
               EcoMate
             </h1>
           </Link>
-          <p className="mt-2" style={{ color: 'var(--text-sub)' }}>Start your 14-day free trial</p>
+          <p className="mt-2" style={{ color: 'var(--text-sub)' }}>Create your merchant account</p>
         </div>
         
         <form className="space-y-4" onSubmit={handleRegister}>

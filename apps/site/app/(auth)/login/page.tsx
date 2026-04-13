@@ -13,6 +13,12 @@ export default function MerchantLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useState(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/overview');
+    });
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
