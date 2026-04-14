@@ -1,5 +1,6 @@
 import { Package, Users, ShoppingBag, DollarSign, MessageSquare, ArrowUpRight, Clock, Briefcase, Palette, History } from 'lucide-react';
 import Link from 'next/link';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
