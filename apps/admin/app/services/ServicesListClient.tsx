@@ -33,6 +33,8 @@ export default function ServicesListClient({ initialServices }: { initialService
     order_index: services.length
   });
 
+  const [editingService, setEditingService] = useState<Service | null>(null);
+
   const toggleStatus = async (service: Service) => {
     const { error } = await supabase
       .from('services')
@@ -57,6 +59,32 @@ export default function ServicesListClient({ initialServices }: { initialService
       setServices([...services, data]);
       setShowAdd(false);
       setNewService({ title: '', description: '', icon: 'Briefcase', category: 'Management', is_active: true, order_index: services.length + 1 });
+    }
+    setLoading(false);
+  };
+
+  const handleUpdateService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingService) return;
+    setLoading(true);
+    
+    // Call our admin API to ensure we bypass RLS if needed, or use supabase directly if RLS allows
+    const { data, error } = await supabase
+      .from('services')
+      .update({
+        title: editingService.title,
+        description: editingService.description,
+        icon: editingService.icon,
+        category: editingService.category,
+        is_active: editingService.is_active
+      })
+      .eq('id', editingService.id)
+      .select()
+      .single();
+
+    if (!error && data) {
+      setServices(services.map(s => s.id === data.id ? data : s));
+      setEditingService(null);
     }
     setLoading(false);
   };
@@ -113,15 +141,21 @@ export default function ServicesListClient({ initialServices }: { initialService
               
               <div className="mt-auto pt-6 border-t border-slate-800 flex justify-between items-center">
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{service.category}</span>
-                 <button onClick={() => deleteService(service.id)} className="text-slate-600 hover:text-red-500 transition-colors">
-                    <Trash2 size={16} />
-                 </button>
+                 <div className="flex items-center gap-3">
+                    <button onClick={() => setEditingService(service)} className="text-slate-600 hover:text-cyan-400 transition-colors">
+                       <Edit2 size={16} />
+                    </button>
+                    <button onClick={() => deleteService(service.id)} className="text-slate-600 hover:text-red-500 transition-colors">
+                       <Trash2 size={16} />
+                    </button>
+                 </div>
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Add Modal */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
           <div className="bg-[#0A1628] border border-slate-700 rounded-[2.5rem] p-10 max-w-xl w-full shadow-2xl relative">
@@ -143,10 +177,42 @@ export default function ServicesListClient({ initialServices }: { initialService
               </div>
               <div className="flex gap-4 pt-4">
                 <button type="submit" disabled={loading} className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-                   {loading ? <Loader2 className="animate-spin" /> : <ShieldCheck size={18} />}
+                   {loading ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
                    Initialize Domain
                 </button>
                 <button type="button" onClick={() => setShowAdd(false)} className="px-8 py-4 bg-slate-800 text-slate-400 font-black rounded-xl text-xs uppercase tracking-widest">Abort</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingService && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-[#0A1628] border border-slate-700 rounded-[2.5rem] p-10 max-w-xl w-full shadow-2xl relative">
+            <h3 className="text-2xl font-black text-white tracking-tight mb-8">Modify System Node</h3>
+            <form onSubmit={handleUpdateService} className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Service Title</label>
+                <input required value={editingService.title} onChange={e => setEditingService({...editingService, title: e.target.value})} className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-6 py-3 text-white outline-none focus:border-cyan-500 transition-all font-bold mt-2" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Icon Profile</label>
+                <select value={editingService.icon} onChange={e => setEditingService({...editingService, icon: e.target.value})} className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-6 py-3 text-white outline-none focus:border-cyan-500 transition-all font-bold mt-2 appearance-none">
+                   {Object.keys(ICON_MAP).map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Descriptor</label>
+                <textarea required value={editingService.description} onChange={e => setEditingService({...editingService, description: e.target.value})} className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-6 py-4 text-white outline-none focus:border-cyan-500 transition-all font-bold mt-2 h-32" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button type="submit" disabled={loading} className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                   {loading ? <Loader2 className="animate-spin" size={18} /> : <Edit2 size={18} />}
+                   Update Configuration
+                </button>
+                <button type="button" onClick={() => setEditingService(null)} className="px-8 py-4 bg-slate-800 text-slate-400 font-black rounded-xl text-xs uppercase tracking-widest">Discard</button>
               </div>
             </form>
           </div>
