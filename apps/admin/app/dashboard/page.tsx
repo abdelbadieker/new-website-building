@@ -10,7 +10,7 @@ export default async function AdminDashboard() {
     { count: totalMerchants },
     { count: totalProducts },
     { data: orders },
-    { count: openTickets },
+    { data: allTickets, count: openTickets },
     { count: totalReviews },
     { count: totalCustomers },
     { count: totalServices },
@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('orders').select('*').order('created_at', { ascending: false }),
-    supabaseAdmin.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open'),
+    supabaseAdmin.from('support_tickets').select('*', { count: 'exact' }).eq('status', 'Open').order('created_at', { ascending: false }).limit(5),
     supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('customers').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('services').select('*', { count: 'exact', head: true }),
@@ -28,8 +28,7 @@ export default async function AdminDashboard() {
     supabaseAdmin.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(10)
   ]);
 
-  const allOrders = orders || [];
-  const totalRevenue = allOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+  const totalRevenue = (orders || []).reduce((sum, order) => sum + (Number(order.total) || 0), 0);
   
   // Create a unified activity feed
   const activityFeed = [
