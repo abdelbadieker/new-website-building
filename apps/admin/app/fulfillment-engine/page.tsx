@@ -227,7 +227,43 @@ export default function FulfillmentEngine() {
                     <th className="px-8 py-5 text-center">Controls</th>
                   </tr>
                 </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {merchantProducts.length === 0 ? (
+                    <tr><td colSpan={4} className="p-20 text-center text-slate-600 italic font-medium">No logistical SKUs found for this organization.</td></tr>
+                  ) : merchantProducts.map(p => (
+                    <tr key={p.id} className="hover:bg-slate-800/30 transition-colors group/row">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                           <div className="w-14 h-14 bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 flex items-center justify-center shrink-0">
+                              {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package className="text-slate-600" size={24} />}
+                           </div>
+                           <div>
+                             <div className="font-black text-white group-hover/row:text-blue-400 transition-colors leading-tight">{p.name}</div>
+                             <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">ID: {p.id.slice(0, 8)}</div>
+                           </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${p.stock > 10 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${p.stock > 10 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                          {p.stock} Units Primary
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-right font-black text-white">DA {p.price?.toLocaleString()}</td>
+                      <td className="px-8 py-5 text-center">
+                        <button 
+                          onClick={() => deleteProduct(p.id)}
+                          className="w-10 h-10 bg-slate-800 text-slate-600 hover:text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all border border-slate-700"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
           ) : (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">

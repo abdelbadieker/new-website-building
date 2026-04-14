@@ -238,45 +238,50 @@ export default function CRMImportClient() {
       </div>
 
       <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                   </div>
-                ) : (
-                  <div className="flex flex-col items-center text-slate-600 group-hover:text-slate-400 transition-colors">
-                    <Upload size={32} className="mb-4" />
-                    <span className="text-xs font-black uppercase tracking-widest">Deploy Local Data File</span>
-                  </div>
-                )}
-                {file && (
-                  <button 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); setError(null); }}
-                    className="absolute top-4 right-4 w-10 h-10 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-500 rounded-xl transition-all flex items-center justify-center shadow-lg border border-slate-700"
-                  >
-                    <X size={20} />
-                  </button>
-                )}
-             </label>
-          </div>
+        {!selectedMerchant ? (
+           <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-500">
+              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 mb-2">
+                 <AlertCircle size={32} />
+              </div>
+              <h4 className="text-xl font-black text-white uppercase tracking-tight">Select a Merchant Context</h4>
+              <p className="text-slate-500 text-sm font-medium">Please select a target organization above to initialize the data pipeline.</p>
+           </div>
         ) : (
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">Cloud Sheet Integration URL</label>
-            <div className="relative group">
-              <LinkIcon size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
-              <input
-                value={googleSheetsUrl}
-                onChange={e => setGoogleSheetsUrl(e.target.value)}
-                placeholder="Paste public Google Sheets URL..."
-                className="w-full bg-[#07101F] border border-slate-700 rounded-2xl pl-14 pr-14 py-5 text-white outline-none focus:border-emerald-500 transition-all text-sm font-bold shadow-inner"
-              />
-              {googleSheetsUrl && (
-                <button 
-                  onClick={() => setGoogleSheetsUrl('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-800 text-slate-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          <>
+            {importMode === 'file' ? (
+              <div className="space-y-6">
+                 <label className={`relative group w-full h-48 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/20'}`}>
+                    <input type="file" className="hidden" accept={ACCEPT_STRING} onChange={handleFileChange} />
+                    {file ? (
+                       <div className="flex flex-col items-center animate-in zoom-in duration-300">
+                          <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-4">
+                            <CheckCircle2 size={24} />
+                          </div>
+                          <span className="text-sm font-black text-white px-8 text-center line-clamp-1">{file.name}</span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(file.size / 1024).toFixed(1)} KB Ready</span>
+                       </div>
+                    ) : (
+                      <div className="flex flex-col items-center text-slate-600 group-hover:text-slate-400 transition-colors">
+                        <Upload size={32} className="mb-4" />
+                        <span className="text-xs font-black uppercase tracking-widest">Deploy Local Data File</span>
+                      </div>
+                    )}
+                 </label>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">Cloud Sheet Integration URL</label>
+                <div className="relative group">
+                  <LinkIcon size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+                  <input
+                    value={googleSheetsUrl}
+                    onChange={e => setGoogleSheetsUrl(e.target.value)}
+                    placeholder="Paste public Google Sheets URL..."
+                    className="w-full bg-[#07101F] border border-slate-700 rounded-2xl pl-14 pr-14 py-5 text-white outline-none focus:border-emerald-500 transition-all text-sm font-bold shadow-inner"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 flex flex-col items-center gap-4">
                 {file && (
