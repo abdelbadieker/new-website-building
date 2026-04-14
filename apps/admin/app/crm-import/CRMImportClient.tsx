@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Link as LinkIcon, FileSpreadsheet, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
@@ -23,84 +22,19 @@ function parseCSV(text: string): Record<string, string>[] {
     const values = line.split(',').map(v => v.trim());
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
-      if (header.includes('name')) row.name = values[index] || '';
-      if (header.includes('email')) row.email = values[index] || '';
-      if (header.includes('phone')) row.phone = values[index] || '';
-      if (header.includes('city')) row.city = values[index] || '';
-      if (header.includes('note')) row.notes = values[index] || '';
+      const v = values[index] || '';
+      if (header.includes('name')) row.name = v;
+      if (header.includes('email')) row.email = v;
+      if (header.includes('phone')) row.phone = v;
+      if (header.includes('city')) row.city = v;
+      if (header.includes('note')) row.notes = v;
     });
     return row;
   });
 }
 
-function parseExcel(buffer: ArrayBuffer): Record<string, string>[] {
-  const workbook = XLSX.read(buffer, { type: 'array' });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-  
-  if (jsonData.length < 2) return [];
-  
-  const headers = (jsonData[0] as string[]).map(h => String(h || '').trim().toLowerCase());
-  return jsonData.slice(1).filter(row => row.some(cell => cell)).map(row => {
-    const record: Record<string, string> = {};
-    headers.forEach((header, index) => {
-      const value = String(row[index] || '').trim();
-      if (header.includes('name')) record.name = value;
-      if (header.includes('email')) record.email = value;
-      if (header.includes('phone')) record.phone = value;
-      if (header.includes('city')) record.city = value;
-      if (header.includes('note')) record.notes = value;
-    });
-    return record;
-  });
-}
-
-function parseTextDocument(text: string): Record<string, string>[] {
-  const lines = text.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-
-  if (lines[0].includes('\t')) {
-    const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
-    return lines.slice(1).map(line => {
-      const values = line.split('\t').map(v => v.trim());
-      const row: Record<string, string> = {};
-      headers.forEach((header, index) => {
-        if (header.includes('name')) row.name = values[index] || '';
-        if (header.includes('email')) row.email = values[index] || '';
-        if (header.includes('phone')) row.phone = values[index] || '';
-        if (header.includes('city')) row.city = values[index] || '';
-        if (header.includes('note')) row.notes = values[index] || '';
-      });
-      return row;
-    });
-  }
-
-  if (lines[0].includes(',')) {
-    return parseCSV(lines.join('\n'));
-  }
-
-  if (lines[0].includes(';')) {
-    const headers = lines[0].split(';').map(h => h.trim().toLowerCase());
-    return lines.slice(1).map(line => {
-      const values = line.split(';').map(v => v.trim());
-      const row: Record<string, string> = {};
-      headers.forEach((header, index) => {
-        if (header.includes('name')) row.name = values[index] || '';
-        if (header.includes('email')) row.email = values[index] || '';
-        if (header.includes('phone')) row.phone = values[index] || '';
-        if (header.includes('city')) row.city = values[index] || '';
-        if (header.includes('note')) row.notes = values[index] || '';
-      });
-      return row;
-    });
-  }
-
-  return [];
-}
-
 export default function CRMImportClient() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [selectedMerchant, setSelectedMerchant] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
@@ -114,7 +48,7 @@ export default function CRMImportClient() {
     supabase.from('profiles').select('id, full_name, email').order('full_name').then(({ data }) => {
       setMerchants(data || []);
     });
-  }, []);
+  }, [supabase]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -128,6 +62,8 @@ export default function CRMImportClient() {
       setError(`Unsupported file type. Accepted: ${ACCEPTED_EXTENSIONS.join(', ')}`);
       setFile(null);
     }
+    // Reset the input value so the same file can be selected again after deletion
+    e.target.value = '';
   };
 
   const processFile = async (file: File): Promise<Record<string, string>[]> => {
@@ -139,8 +75,29 @@ export default function CRMImportClient() {
     }
 
     if (ext === '.xlsx' || ext === '.xls') {
-      const buffer = await file.arrayBuffer();
-      return parseExcel(buffer);
+       // Load XLSX only on demand to prevent SSR errors
+       const XLSX = await import('xlsx');
+       const buffer = await file.arrayBuffer();
+       const workbook = XLSX.read(buffer, { type: 'array' });
+       const sheetName = workbook.SheetNames[0];
+       const sheet = workbook.Sheets[sheetName];
+       const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+       
+       if (jsonData.length < 2) return [];
+       
+       const headers = (jsonData[0] as string[]).map(h => String(h || '').trim().toLowerCase());
+       return jsonData.slice(1).filter(row => row.some(cell => cell)).map(row => {
+         const record: Record<string, string> = {};
+         headers.forEach((header, index) => {
+           const value = String(row[index] || '').trim();
+           if (header.includes('name')) record.name = value;
+           if (header.includes('email')) record.email = value;
+           if (header.includes('phone')) record.phone = value;
+           if (header.includes('city')) record.city = value;
+           if (header.includes('note')) record.notes = value;
+         });
+         return record;
+       });
     }
 
     if (ext === '.docx') {
@@ -148,253 +105,228 @@ export default function CRMImportClient() {
         const mammoth = await import('mammoth');
         const buffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-        return parseTextDocument(result.value);
+        // Simplified text extraction logic as fallback
+        return parseCSV(result.value.replace(/\t/g, ','));
       } catch {
-        throw new Error('Could not parse DOCX file. Please ensure it contains tabular data (comma, tab, or semicolon separated).');
+        throw new Error('Could not parse DOCX file.');
       }
     }
 
     if (ext === '.pdf') {
       try {
         const pdfjs = await import('pdfjs-dist');
-        pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-        
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
         const buffer = await file.arrayBuffer();
         const pdf = await pdfjs.getDocument({ data: buffer }).promise;
         let fullText = '';
-        
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
           const strings = content.items.map((item: any) => item.str);
           fullText += strings.join(' ') + '\n';
         }
-
-        const parsed = parseTextDocument(fullText);
-        if (parsed.length === 0) {
-          throw new Error('Could not extract structured data from PDF. Please convert to CSV or Excel format for best results.');
-        }
-        return parsed;
+        return parseCSV(fullText.replace(/\s+/g, ','));
       } catch (err: any) {
-        console.error('PDF Parse Error:', err);
-        throw new Error('Could not parse PDF file. PDF parsing has limitations — for best results, export your data as CSV or Excel.');
+        throw new Error('PDF parsing failed.');
       }
     }
 
     throw new Error('Unsupported format');
   };
 
-  const handleImportFromSheets = async () => {
-    if (!googleSheetsUrl || !selectedMerchant) return;
-    setImporting(true);
-    setError(null);
-    setResults(null);
-
-    try {
-      let csvUrl = googleSheetsUrl;
-      const match = googleSheetsUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-      if (match) {
-        const sheetId = match[1];
-        csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-      }
-
-      const response = await fetch(csvUrl);
-      if (!response.ok) throw new Error('Could not fetch Google Sheet. Make sure it is publicly accessible (Share → Anyone with the link).');
-      
-      const text = await response.text();
-      const dataRows = parseCSV(text).map(row => ({ ...row, merchant_id: selectedMerchant }));
-
-      if (dataRows.length === 0) throw new Error('No data rows found in the Google Sheet.');
-
-      const { error: insertError } = await supabase.from('customers').insert(dataRows, { count: 'exact' });
-      if (insertError) throw insertError;
-
-      setResults({ success: dataRows.length, failed: 0 });
-      await supabase.from('activity_logs').insert({
-        action: `Imported ${dataRows.length} CRM records from Google Sheets`,
-        entity_type: 'crm',
-        details: `Merchant: ${selectedMerchant}`
-      });
-    } catch (err: any) {
-      setError(err.message || 'Error importing from Google Sheets');
-    } finally {
-      setImporting(false);
-    }
-  };
-
   const handleImport = async () => {
-    if (!file || !selectedMerchant) return;
+    const target = importMode === 'file' ? file : googleSheetsUrl;
+    if (!target || !selectedMerchant) return;
+    
     setImporting(true);
     setError(null);
     setResults(null);
 
     try {
-      const dataRows = (await processFile(file)).map(row => ({ ...row, merchant_id: selectedMerchant }));
-
-      if (dataRows.length === 0) {
-        throw new Error('No data rows found. Make sure your file has headers (name, email, phone, city) and data rows.');
+      let dataRows: Record<string, string>[] = [];
+      
+      if (importMode === 'sheets') {
+        let csvUrl = googleSheetsUrl;
+        const match = googleSheetsUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) {
+          const sheetId = match[1];
+          csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+        }
+        const response = await fetch(csvUrl);
+        if (!response.ok) throw new Error('Could not fetch Google Sheet.');
+        const text = await response.text();
+        dataRows = parseCSV(text);
+      } else {
+        dataRows = await processFile(file!);
       }
 
-      const { error: insertError } = await supabase.from('customers').insert(dataRows, { count: 'exact' });
+      if (dataRows.length === 0) throw new Error('No data rows found.');
+
+      const finalRows = dataRows.map(row => ({ ...row, merchant_id: selectedMerchant }));
+      const { error: insertError } = await supabase.from('customers').insert(finalRows);
       if (insertError) throw insertError;
 
-      setResults({ success: dataRows.length, failed: 0 });
-      await supabase.from('activity_logs').insert({
-        action: `Bulk imported ${dataRows.length} CRM records`,
-        entity_type: 'crm',
-        details: `Merchant: ${selectedMerchant}, File: ${file.name}`
-      });
+      setResults({ success: finalRows.length, failed: 0 });
+      await supabase.from('activity_logs').insert({ action: `Bulk CRM import: ${finalRows.length} rows`, entity_type: 'crm' });
     } catch (err: any) {
-      setError(err.message || 'Error processing file');
+      setError(err.message || 'Error processing import');
     } finally {
       setImporting(false);
     }
-  };
-
-  const fileTypeLabel = (name: string) => {
-    const ext = getFileExtension(name);
-    const labels: Record<string, string> = { '.csv': 'CSV', '.xlsx': 'Excel', '.xls': 'Excel', '.pdf': 'PDF', '.docx': 'Word' };
-    return labels[ext] || 'File';
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h2 className="text-3xl font-extrabold text-white flex items-center gap-3">
-          <Upload className="text-blue-500 w-10 h-10" />
-          Bulk CRM Import
-        </h2>
-        <p className="text-slate-400 mt-2">Import customer data for specific merchants via CSV, Excel, PDF, DOCX, or Google Sheets.</p>
+    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-black text-white flex items-center gap-3">
+            <Upload className="text-blue-500 w-10 h-10" />
+            CRM Intelligence Hub
+          </h2>
+          <p className="text-slate-400 mt-1 font-medium">Inject high-volume merchant data into the platform engine.</p>
+        </div>
       </div>
 
-      <div className="bg-[#0A1628] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm">1</span>
-          <h3 className="font-bold text-white uppercase tracking-wider text-xs">Select Merchant</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Step 1: Merchant Context */}
+        <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-xs">1</div>
+            <h3 className="font-black text-white uppercase tracking-widest text-xs">Target Organization</h3>
+          </div>
+          <select
+            value={selectedMerchant}
+            onChange={e => setSelectedMerchant(e.target.value)}
+            className="w-full bg-[#07101F] border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none focus:border-blue-500 transition-all appearance-none text-sm font-bold"
+          >
+            <option value="">Choose Merchant...</option>
+            {merchants.map(m => (
+              <option key={m.id} value={m.id}>{m.full_name || m.email}</option>
+            ))}
+          </select>
         </div>
-        <p className="text-xs text-slate-500">Pick the merchant who owns these records.</p>
-        <select
-          value={selectedMerchant}
-          onChange={e => setSelectedMerchant(e.target.value)}
-          className="w-full bg-[#07101F] border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 transition-all appearance-none"
-        >
-          <option value="">Select a Merchant...</option>
-          {merchants.map(m => (
-            <option key={m.id} value={m.id}>{m.full_name || m.email}</option>
-          ))}
-        </select>
+
+        {/* Step 2: Data Source */}
+        <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs">2</div>
+            <h3 className="font-black text-white uppercase tracking-widest text-xs">Source Selection</h3>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setImportMode('file')}
+              className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${importMode === 'file' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-500 border-transparent hover:text-white'}`}
+            >
+              <FileText size={14} /> File
+            </button>
+            <button
+              onClick={() => setImportMode('sheets')}
+              className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${importMode === 'sheets' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-500 border-transparent hover:text-white'}`}
+            >
+              <FileSpreadsheet size={14} /> Sheets
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-[#0A1628] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm">2</span>
-          <h3 className="font-bold text-white uppercase tracking-wider text-xs">Import Data</h3>
-        </div>
-
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setImportMode('file')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${importMode === 'file' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-transparent hover:text-white'}`}
-          >
-            <FileText className="w-4 h-4" /> Upload File
-          </button>
-          <button
-            onClick={() => setImportMode('sheets')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${importMode === 'sheets' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-transparent hover:text-white'}`}
-          >
-            <FileSpreadsheet className="w-4 h-4" /> Google Sheets
-          </button>
-        </div>
-
+      {/* Main Import Zone */}
+      <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
         {importMode === 'file' ? (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500">Accepted formats: CSV, Excel (.xlsx, .xls), PDF, Word (.docx). File must include headers: name, email, phone, city.</p>
-            <label className={`w-full h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 hover:border-slate-700'}`}>
-              <input type="file" className="hidden" accept={ACCEPT_STRING} onChange={handleFileChange} />
-              {file ? (
-                <>
-                  <FileText className="text-emerald-400 mb-2" />
-                  <span className="text-xs font-bold text-emerald-400">{file.name}</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-slate-500">{(file.size / 1024).toFixed(1)} KB</span>
-                    <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full font-semibold">{fileTypeLabel(file.name)}</span>
+          <div className="space-y-6">
+             <label className={`relative group w-full h-48 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/20'}`}>
+                <input type="file" className="hidden" accept={ACCEPT_STRING} onChange={handleFileChange} />
+                {file ? (
+                   <div className="flex flex-col items-center animate-in zoom-in duration-300">
+                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-4">
+                        <CheckCircle2 size={24} />
+                      </div>
+                      <span className="text-sm font-black text-white px-8 text-center line-clamp-1">{file.name}</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(file.size / 1024).toFixed(1)} KB Ready</span>
+                   </div>
+                ) : (
+                  <div className="flex flex-col items-center text-slate-600 group-hover:text-slate-400 transition-colors">
+                    <Upload size={32} className="mb-4" />
+                    <span className="text-xs font-black uppercase tracking-widest">Deploy Local Data File</span>
                   </div>
+                )}
+                {file && (
                   <button 
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); setError(null); }}
-                    className="absolute top-2 right-2 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 rounded-lg transition-colors border border-slate-700"
+                    className="absolute top-4 right-4 w-10 h-10 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-500 rounded-xl transition-all flex items-center justify-center shadow-lg border border-slate-700"
                   >
-                    <X className="w-4 h-4" />
+                    <X size={20} />
                   </button>
-                </>
-              ) : (
-                <>
-                  <Upload className="text-slate-600 mb-2" />
-                  <span className="text-xs text-slate-500 font-medium">Click or drag file here</span>
-                  <span className="text-[10px] text-slate-600 mt-1">CSV · Excel · PDF · DOCX</span>
-                </>
-              )}
-            </label>
+                )}
+             </label>
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500">Paste a Google Sheets URL. The sheet must be publicly accessible (Share → Anyone with the link) and include headers: name, email, phone, city.</p>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-                <input
-                  value={googleSheetsUrl}
-                  onChange={e => setGoogleSheetsUrl(e.target.value)}
-                  placeholder="https://docs.google.com/spreadsheets/d/..."
-                  className="w-full bg-[#07101F] border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-emerald-500 transition-all text-sm"
-                />
-              </div>
+          <div className="space-y-4">
+            <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">Cloud Sheet Integration URL</label>
+            <div className="relative group">
+              <LinkIcon size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                value={googleSheetsUrl}
+                onChange={e => setGoogleSheetsUrl(e.target.value)}
+                placeholder="Paste public Google Sheets URL..."
+                className="w-full bg-[#07101F] border border-slate-700 rounded-2xl pl-14 pr-14 py-5 text-white outline-none focus:border-emerald-500 transition-all text-sm font-bold shadow-inner"
+              />
+              {googleSheetsUrl && (
+                <button 
+                  onClick={() => setGoogleSheetsUrl('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-800 text-slate-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           </div>
         )}
-      </div>
 
-      <div className="flex justify-center">
-        <button
-          onClick={importMode === 'file' ? handleImport : handleImportFromSheets}
-          disabled={(importMode === 'file' ? !file : !googleSheetsUrl) || !selectedMerchant || importing}
-          className="px-12 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-black rounded-2xl shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] flex items-center gap-3"
-        >
-          {importing ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
-          {importing ? 'Processing Import...' : 'Execute Bulk Import'}
-        </button>
+        <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleImport}
+              disabled={importing || (importMode === 'file' ? !file : !googleSheetsUrl) || !selectedMerchant}
+              className={`px-12 py-5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:scale-[1.02] text-white font-black rounded-2xl shadow-2xl transition-all disabled:opacity-30 disabled:grayscale flex items-center gap-3 text-sm uppercase tracking-widest`}
+            >
+              {importing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+              {importing ? 'Processing Data Pipeline...' : 'Confirm Bulk Ingestion'}
+            </button>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center gap-3 text-red-400">
+        <div className="bg-red-500/10 border border-red-500/30 p-5 rounded-2xl flex items-center gap-4 text-red-400 animate-in slide-in-from-top-4 duration-300">
           <AlertCircle className="shrink-0" />
-          <span className="text-sm font-medium">{error}</span>
+          <span className="text-xs font-bold leading-relaxed">{error}</span>
         </div>
       )}
 
       {results && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl space-y-4 shadow-lg animate-in fade-in slide-in-from-bottom-4">
-          <h4 className="font-bold text-emerald-400 flex items-center gap-2">
-            <CheckCircle2 fontSize={18} />
-            Import Completed Successfully
-          </h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#07101F] rounded-xl p-4 border border-slate-800">
-              <div className="text-[10px] text-slate-500 uppercase font-black">Records Created</div>
-              <div className="text-2xl font-black text-white">{results.success}</div>
-            </div>
-            <div className="bg-[#07101F] rounded-xl p-4 border border-slate-800">
-              <div className="text-[10px] text-slate-500 uppercase font-black">Failed Rows</div>
-              <div className="text-2xl font-black text-slate-500">{results.failed}</div>
-            </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/30 p-8 rounded-3xl space-y-6 shadow-xl animate-in zoom-in duration-300 text-center">
+          <div className="inline-flex w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full items-center justify-center mb-2">
+            <CheckCircle2 size={32} />
+          </div>
+          <h4 className="text-xl font-black text-white">Ingestion Successful</h4>
+          <div className="flex justify-center gap-8">
+             <div>
+               <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Records Injected</div>
+               <div className="text-3xl font-black text-emerald-400">{results.success}</div>
+             </div>
+             <div>
+               <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Failures</div>
+               <div className="text-3xl font-black text-slate-700">{results.failed}</div>
+             </div>
           </div>
           <button
             onClick={() => {setFile(null); setResults(null); setGoogleSheetsUrl('');}}
-            className="text-xs text-slate-400 hover:text-white underline font-medium"
+            className="text-xs font-black text-emerald-400 hover:text-white uppercase tracking-widest transition-colors"
           >
-            Import another file
+            Start New Import Sequence
           </button>
         </div>
       )}
     </div>
+  );
+}
   );
 }

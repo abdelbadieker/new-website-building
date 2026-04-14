@@ -1,50 +1,98 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { Users, Search, ShoppingBag, DollarSign, ShieldAlert, Award, MoreVertical, Trash2, Edit } from 'lucide-react';
+import { MerchantsListClient } from './MerchantsListClient';
 
-function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
+export const dynamic = 'force-dynamic';
 
-type Customer = { id: string; name: string; email: string; phone: string; city: string; total_orders: number; total_spent: number; created_at: string };
+export default async function MerchantsManagement() {
+  // Fetch real platform-wide merchant data via Super Admin client
+  // This bypasses RLS and solves the "0 registered users" issue
+  const { data: merchants, error } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-export default function MerchantsPage() {
-  const supabase = createClient();
-  const [merchants, setMerchants] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  if (error) {
+    console.error('Error fetching merchants:', error);
+  }
 
-  useEffect(() => {
-    supabase.from('customers').select('*').order('total_spent', { ascending: false }).then(({ data }) => { setMerchants(data || []); setLoading(false); });
-  }, []);
-
-  if (loading) return <div className="flex justify-center p-20"><div className="w-8 h-8 border-[3px] border-slate-700 border-t-emerald-400 rounded-full animate-spin" /></div>;
+  const allMerchants = merchants || [];
+  
+  // Aggregate stats for the top section
+  const totalMerchants = allMerchants.length;
+  const growthPlanCount = allMerchants.filter(m => m.plan === 'Growth').length;
+  const enterprisePlanCount = allMerchants.filter(m => m.plan === 'Enterprise').length;
+  const bannedCount = allMerchants.filter(m => m.is_banned).length;
 
   return (
-    <div className="space-y-6">
-      <div><h2 className="text-2xl font-bold">Merchants & Users</h2><p className="text-slate-400 text-sm mt-1">{merchants.length} registered users</p></div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#0A1628] p-5 rounded-xl border border-slate-800"><div className="text-xs text-slate-400 uppercase tracking-wider">Total Users</div><div className="text-3xl font-bold mt-2">{merchants.length}</div></div>
-        <div className="bg-[#0A1628] p-5 rounded-xl border border-slate-800"><div className="text-xs text-slate-400 uppercase tracking-wider">Total Revenue</div><div className="text-3xl font-bold mt-2 text-emerald-400">DA {merchants.reduce((a, b) => a + (b.total_spent || 0), 0).toLocaleString()}</div></div>
-        <div className="bg-[#0A1628] p-5 rounded-xl border border-slate-800"><div className="text-xs text-slate-400 uppercase tracking-wider">Avg. Orders/User</div><div className="text-3xl font-bold mt-2 text-blue-400">{merchants.length > 0 ? Math.round(merchants.reduce((a, b) => a + (b.total_orders || 0), 0) / merchants.length) : 0}</div></div>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-3xl font-black text-white tracking-tight">Merchant & User Hub</h2>
+          <p className="text-slate-400 mt-1 font-medium">Manage platform accounts, subscriptions, and access controls.</p>
+        </div>
+        <div className="bg-blue-500 text-white px-5 py-2.5 rounded-2xl font-black text-sm shadow-xl shadow-blue-600/20 flex items-center gap-2">
+          <Users size={18} />
+          {totalMerchants} Total Registered
+        </div>
       </div>
 
-      <div className="bg-[#0A1628] rounded-xl border border-slate-800 overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead><tr className="border-b border-slate-800 text-slate-400 text-xs">
-            <th className="px-5 py-3 font-medium">User</th><th className="px-5 py-3 font-medium">Phone</th><th className="px-5 py-3 font-medium">City</th><th className="px-5 py-3 font-medium text-right">Orders</th><th className="px-5 py-3 font-medium text-right">Total Spent</th><th className="px-5 py-3 font-medium text-right">Joined</th>
-          </tr></thead>
-          <tbody className="divide-y divide-slate-800/50">
-            {merchants.map(m => (
-              <tr key={m.id} className="hover:bg-slate-800/30">
-                <td className="px-5 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">{m.name?.charAt(0)}</div><div><div className="text-white font-medium">{m.name}</div><div className="text-xs text-slate-500">{m.email}</div></div></div></td>
-                <td className="px-5 py-3 text-slate-300">{m.phone}</td>
-                <td className="px-5 py-3 text-slate-300">{m.city}</td>
-                <td className="px-5 py-3 text-right text-white font-bold">{m.total_orders}</td>
-                <td className="px-5 py-3 text-right text-emerald-400 font-bold">DA {m.total_spent?.toLocaleString()}</td>
-                <td className="px-5 py-3 text-right text-slate-400 text-xs">{new Date(m.created_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Growth Plans</p>
+            <p className="text-2xl font-black text-emerald-400">{growthPlanCount}</p>
+          </div>
+          <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Award size={24} />
+          </div>
+        </div>
+        <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Enterprise</p>
+            <p className="text-2xl font-black text-blue-400">{enterprisePlanCount}</p>
+          </div>
+          <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Award size={24} />
+          </div>
+        </div>
+        <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Account Bans</p>
+            <p className="text-2xl font-black text-red-500">{bannedCount}</p>
+          </div>
+          <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <ShieldAlert size={24} />
+          </div>
+        </div>
+        <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
+          <div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">New this month</p>
+            <p className="text-2xl font-black text-slate-400">0</p>
+          </div>
+           <div className="w-12 h-12 bg-slate-800 text-slate-400 rounded-2xl flex items-center justify-center">
+            <ShoppingBag size={24} />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Merchants Table Client Component */}
+      <div className="bg-[#0A1628] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
+        <MerchantsListClient initialMerchants={allMerchants} />
+      </div>
+
+      {/* Note Section */}
+      <div className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-6 flex gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-400 shrink-0">
+          <Award size={24} />
+        </div>
+        <div>
+          <h4 className="font-bold text-white mb-1">Data Governance Notice</h4>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            All user data presented here is fetched via the Super Admin protocol. Modifications to subscription plans or account status are logged and applied globally across the EcoMate network.
+          </p>
+        </div>
       </div>
     </div>
   );

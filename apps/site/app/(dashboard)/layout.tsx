@@ -50,6 +50,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   const [userEmail, setUserEmail] = useState('');
   const [navOpen, setNavOpen] = useState(true);
   const [features, setFeatures] = useState<Record<string, boolean>>({});
+  const [userPlan, setUserPlan] = useState('Free');
 
   useEffect(() => {
     const supabase = createClient();
@@ -59,11 +60,12 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
       if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, is_banned, features')
+          .select('full_name, is_banned, features, plan')
           .eq('id', data.user.id)
           .single();
         
         if (profile?.features) setFeatures(profile.features);
+        if (profile?.plan) setUserPlan(profile.plan);
 
         if (profile?.is_banned) {
           alert('Your account has been restricted by the administrator.');
@@ -92,6 +94,28 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
     };
     fetchNotifs();
   }, []);
+
+  const planDefaultsByTier: Record<string, string[]> = {
+    'Free': ['overview', 'support'],
+    'Pro': ['overview', 'orders', 'products', 'crm', 'analytics', 'support'],
+    'Enterprise': ['overview', 'orders', 'products', 'crm', 'ecotrack', 'fulfillment', 'chatbot', 'creative', 'web', 'estore', 'analytics', 'support']
+  };
+
+  const isFeatureEnabled = (featureKey?: string) => {
+    if (!featureKey) return true;
+    if (['overview', 'support', 'billing'].includes(featureKey)) return true;
+    
+    // Administrative logic: Default to closed if no plan and no override
+    const activePlan = userPlan || 'Free';
+    
+    // 1. Check custom overrides from Admin Hub (Highest Priority)
+    if (features[featureKey] === true) return true;
+    if (features[featureKey] === false) return false;
+    
+    // 2. Check Plan Defaults
+    const defaults = planDefaultsByTier[activePlan] || planDefaultsByTier['Free'];
+    return defaults.includes(featureKey);
+  };
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -180,7 +204,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
             {navOpen && navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
-              const isLocked = item.feature && features[item.feature] !== true;
+              const isLocked = !isFeatureEnabled(item.feature);
 
               return (
                 <Link 
@@ -219,7 +243,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                   <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : isLocked ? '#1e293b' : '#64748b' }} />
                   <span>{item.name}</span>
                   {isLocked && <Lock style={{ width: 12, height: 12, marginLeft: 'auto', color: '#475569' }} />}
-                  {isActive && !isLocked && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
+                  {!isLocked && isActive && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
                 </Link>
               );
             })}
@@ -333,7 +357,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             {(() => {
               const currentItem = navItems.find(item => item.href === pathname);
-              if (currentItem?.feature && features[currentItem.feature] !== true) {
+              if (currentItem?.feature && !isFeatureEnabled(currentItem.feature)) {
                 return <SectionLock title={currentItem.name} />;
               }
               return children;

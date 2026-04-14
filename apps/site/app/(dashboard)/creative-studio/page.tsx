@@ -1,13 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText, Upload, Video, X } from 'lucide-react';
+import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText, Upload, Video, X, ExternalLink, Share2 } from 'lucide-react';
 
 type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; delivery_url: string; created_at: string };
+type PLink = { id: string; service: string; partner_name: string; url: string; description: string };
 
 export default function CreativeStudioPage() {
   const supabase = createClient();
   const [briefs, setBriefs] = useState<Brief[]>([]);
+  const [partners, setPartners] = useState<PLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [userEmail, setUserEmail] = useState('');
@@ -31,15 +33,19 @@ export default function CreativeStudioPage() {
       const { data } = await supabase.from('creative_briefs').select('*').eq('user_email', email).order('created_at', { ascending: false });
       setBriefs(data || []);
     }
-    setLoading(false);
+  }, [supabase]);
+
+  const fetchPartners = useCallback(async () => {
+    const { data } = await supabase.from('partner_links').select('*').order('created_at', { ascending: false });
+    setPartners(data || []);
   }, [supabase]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user?.email) setUserEmail(data.session.user.email);
     });
-    fetchBriefs();
-  }, [supabase.auth, fetchBriefs]);
+    Promise.all([fetchBriefs(), fetchPartners()]).finally(() => setLoading(false));
+  }, [supabase.auth, fetchBriefs, fetchPartners]);
 
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,7 +75,7 @@ export default function CreativeStudioPage() {
       return urlData.publicUrl;
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(`Upload failed: ${error.message || 'Unknown error'}. For large videos, ensure your connection is stable.`);
+      alert(`Upload failed: ${error.message || 'Unknown error'}.`);
       return null;
     }
   };
@@ -80,7 +86,6 @@ export default function CreativeStudioPage() {
 
     let refUrl = form.reference_url;
 
-    // If uploading a file, upload it first
     if (referenceMode === 'upload' && referenceFile) {
       const uploadedUrl = await uploadReferenceVideo(referenceFile);
       if (uploadedUrl) refUrl = uploadedUrl;
@@ -102,6 +107,14 @@ export default function CreativeStudioPage() {
     setReferenceFile(null);
     setReferencePreview(null);
     fetchBriefs();
+  };
+
+  const trackClick = async (partner: PLink) => {
+    if (!userEmail) return;
+    await supabase.from('partner_clicks').insert({
+      service: partner.service,
+      user_email: userEmail
+    });
   };
 
   const statusIcon = (s: string) => {
@@ -131,225 +144,156 @@ export default function CreativeStudioPage() {
         </button>
       </div>
 
-      {/* Info Card */}
-      <div style={{ ...st.card, background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(59,130,246,0.08))', borderColor: 'rgba(167,139,250,0.2)' }}>
-        <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7 }}>
-          📹 Submit a creative brief and our team will produce professional video content for your brand. 
-          You can request short-form (TikTok, Reels), marketing ads, or long-form content. 
-          Upload a reference video or paste a link to show us the style you want.
-        </p>
-      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Info Card */}
+          <div style={{ ...st.card, background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(59,130,246,0.08))', borderColor: 'rgba(167,139,250,0.2)' }}>
+            <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7 }}>
+              📹 Submit a creative brief and our team will produce professional video content for your brand. 
+              You can request short-form (TikTok, Reels), marketing ads, or long-form content. 
+            </p>
+          </div>
 
-      {/* Brief Form */}
-      {showForm && (
-        <div style={{ ...st.card, position: 'relative' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 20 }}>Submit Creative Brief</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Video Type</label>
-                <select value={form.video_type} onChange={e => setForm({ ...form, video_type: e.target.value })} style={{ ...st.input, cursor: 'pointer' }}>
-                  <option>Short (TikTok/Reels)</option>
-                  <option>Marketing Ad</option>
-                  <option>Product Showcase</option>
-                  <option>Long-form (YouTube)</option>
-                  <option>Story/Behind the Scenes</option>
-                </select>
+          {/* Brief Form */}
+          {showForm && (
+            <div style={{ ...st.card, position: 'relative', border: '1px solid #7c3aed44' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>Submit Creative Brief</h2>
+                <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
               </div>
-              <div>
-                <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Duration</label>
-                <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} style={{ ...st.input, cursor: 'pointer' }}>
-                  <option>15s</option>
-                  <option>30s</option>
-                  <option>60s</option>
-                  <option>2 minutes</option>
-                  <option>5+ minutes</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Description / Brief *</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...st.input, minHeight: 100, resize: 'vertical' }} placeholder="Describe what you want in the video: products to show, message, style, target audience..." />
-            </div>
-
-            {/* Reference Video — Toggle between URL and Upload */}
-            <div>
-              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 8 }}>
-                Reference Video (optional)
-              </label>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => setReferenceMode('url')}
-                  style={{
-                    ...st.btn, padding: '6px 14px', fontSize: 12,
-                    background: referenceMode === 'url' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)',
-                    color: referenceMode === 'url' ? '#a78bfa' : '#64748b',
-                    border: referenceMode === 'url' ? '1px solid rgba(167,139,250,0.3)' : '1px solid transparent',
-                  }}
-                >
-                  <LinkIcon style={{ width: 12, height: 12 }} /> Paste URL
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setReferenceMode('upload')}
-                  style={{
-                    ...st.btn, padding: '6px 14px', fontSize: 12,
-                    background: referenceMode === 'upload' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)',
-                    color: referenceMode === 'upload' ? '#a78bfa' : '#64748b',
-                    border: referenceMode === 'upload' ? '1px solid rgba(167,139,250,0.3)' : '1px solid transparent',
-                  }}
-                >
-                  <Upload style={{ width: 12, height: 12 }} /> Upload Video
-                </button>
-              </div>
-
-              {referenceMode === 'url' ? (
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    value={form.reference_url} 
-                    onChange={e => setForm({ ...form, reference_url: e.target.value })} 
-                    style={{ ...st.input, paddingRight: form.reference_url ? 40 : 14 }} 
-                    placeholder="Paste a link to a video you like (YouTube, TikTok, Instagram...)" 
-                  />
-                  {form.reference_url && (
-                    <button 
-                      onClick={() => setForm({ ...form, reference_url: '' })}
-                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
-                    >
-                      <X style={{ width: 14, height: 14 }} />
-                    </button>
-                  )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Video Type</label>
+                    <select value={form.video_type} onChange={e => setForm({ ...form, video_type: e.target.value })} style={{ ...st.input, cursor: 'pointer' }}>
+                      <option>Short (TikTok/Reels)</option>
+                      <option>Marketing Ad</option>
+                      <option>Product Showcase</option>
+                      <option>Long-form (YouTube)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Duration</label>
+                    <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} style={{ ...st.input, cursor: 'pointer' }}>
+                      <option>15s</option>
+                      <option>30s</option>
+                      <option>60s</option>
+                      <option>2 minutes</option>
+                    </select>
+                  </div>
                 </div>
-              ) : (
                 <div>
-                  <input ref={fileInputRef} type="file" accept="video/mp4,video/mov,video/webm,video/quicktime,video/*" onChange={handleVideoSelect} style={{ display: 'none' }} />
-                  {referenceFile ? (
-                    <div style={{ border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: 12, background: 'rgba(167,139,250,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <Video style={{ width: 20, height: 20, color: '#a78bfa' }} />
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{referenceFile.name}</div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>{(referenceFile.size / (1024 * 1024)).toFixed(1)} MB</div>
+                  <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Description / Brief *</label>
+                  <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...st.input, minHeight: 100, resize: 'vertical' }} placeholder="Describe what you want: style, message, target audience..." />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 8 }}>
+                    Reference Material
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    <button type="button" onClick={() => setReferenceMode('url')} style={{ ...st.btn, padding: '6px 14px', fontSize: 12, background: referenceMode === 'url' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)', color: referenceMode === 'url' ? '#a78bfa' : '#64748b' }}>
+                      <LinkIcon style={{ width: 12, height: 12 }} /> URL Link
+                    </button>
+                    <button type="button" onClick={() => setReferenceMode('upload')} style={{ ...st.btn, padding: '6px 14px', fontSize: 12, background: referenceMode === 'upload' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)', color: referenceMode === 'upload' ? '#a78bfa' : '#64748b' }}>
+                      <Upload style={{ width: 12, height: 12 }} /> Upload Video
+                    </button>
+                  </div>
+
+                  {referenceMode === 'url' ? (
+                     <div style={{ position: 'relative' }}>
+                       <input value={form.reference_url} onChange={e => setForm({ ...form, reference_url: e.target.value })} style={{ ...st.input, paddingRight: 40 }} placeholder="Paste a link to a reference video (YouTube, TikTok...)" />
+                       {form.reference_url && <button onClick={() => setForm({ ...form, reference_url: '' })} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}><X size={14} /></button>}
+                     </div>
+                  ) : (
+                    <div>
+                      <input ref={fileInputRef} type="file" accept="video/*" onChange={handleVideoSelect} style={{ display: 'none' }} />
+                      {referenceFile ? (
+                        <div style={{ border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: 12, background: 'rgba(167,139,250,0.05)', position: 'relative' }}>
+                          <button onClick={() => { setReferenceFile(null); setReferencePreview(null); }} style={{ position: 'absolute', top: -10, right: -10, width: 24, height: 24, background: '#ef4444', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', zIndex: 10 }}><X size={14} /></button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <Video style={{ width: 20, height: 20, color: '#a78bfa' }} />
+                            <div style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0' }}>{referenceFile.name} ({(referenceFile.size / (1024 * 1024)).toFixed(1)} MB)</div>
                           </div>
+                          {referencePreview && <video src={referencePreview} controls style={{ width: '100%', maxHeight: 150, borderRadius: 8, marginTop: 10 }} />}
                         </div>
-                        <button onClick={() => { setReferenceFile(null); setReferencePreview(null); }} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 4 }}>
-                          <X style={{ width: 16, height: 16 }} />
-                        </button>
-                      </div>
-                      {referencePreview && (
-                        <video src={referencePreview} controls style={{ width: '100%', maxHeight: 200, borderRadius: 8, marginTop: 10 }} />
+                      ) : (
+                        <div onClick={() => fileInputRef.current?.click()} style={{ border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}>
+                          <Upload style={{ width: 24, height: 24, color: '#475569', marginBottom: 8 }} />
+                          <p style={{ fontSize: 12, color: '#64748b' }}>Click to upload reference video (Max 50MB)</p>
+                        </div>
                       )}
                     </div>
-                  ) : (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#a78bfa'; }}
-                      onDragLeave={e => { e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)'; }}
-                      onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)'; const f = e.dataTransfer.files[0]; if (f) { setReferenceFile(f); setReferencePreview(URL.createObjectURL(f)); } }}
-                      style={{
-                        border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: 32,
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', transition: 'border-color 0.2s', background: 'rgba(7,16,31,0.4)',
-                      }}
-                    >
-                      <Upload style={{ width: 28, height: 28, color: '#475569', marginBottom: 8 }} />
-                      <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Click or drag & drop a video</span>
-                      <span style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>MP4, MOV, WEBM up to 50MB</span>
-                    </div>
                   )}
                 </div>
-              )}
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+                <button onClick={handleSubmit} disabled={submitting || !form.description.trim()} style={{ ...st.btn, flex: 1, background: submitting || !form.description.trim() ? '#1e293b' : 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: '#fff' }}>
+                  <Send style={{ width: 14, height: 14 }} />{submitting ? 'Sending...' : 'Confirm Request'}
+                </button>
+              </div>
             </div>
+          )}
 
-            <div>
-              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Reference Description (optional)</label>
-              <textarea value={form.reference_description} onChange={e => setForm({ ...form, reference_description: e.target.value })} style={{ ...st.input, minHeight: 60, resize: 'vertical' }} placeholder="Describe what you like about the reference video, what style you want..." />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-            <button onClick={handleSubmit} disabled={submitting || !form.description.trim()} style={{ ...st.btn, background: submitting || !form.description.trim() ? '#1e293b' : 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: submitting || !form.description.trim() ? '#475569' : '#fff' }}>
-              <Send style={{ width: 14, height: 14 }} />{submitting ? 'Sending...' : 'Submit Brief'}
-            </button>
-            <button onClick={() => { setShowForm(false); setReferenceFile(null); setReferencePreview(null); }} style={{ ...st.btn, background: 'rgba(51,65,85,0.3)', color: '#94a3b8' }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Previous Briefs */}
-      <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 12 }}>Your Briefs</h2>
-        {briefs.length === 0 ? (
-          <div style={{ ...st.card, textAlign: 'center', padding: 40 }}>
-            <FileText style={{ width: 40, height: 40, color: '#334155', margin: '0 auto 12px' }} />
-            <p style={{ color: '#64748b', fontSize: 13 }}>No briefs submitted yet. Click &quot;New Creative Brief&quot; to get started.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {briefs.map(b => (
-              <div key={b.id} style={{ ...st.card, display: 'flex', flexDirection: 'column', gap: 16, padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {/* Previous Briefs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Recent Submissions</h2>
+            {briefs.length === 0 ? (
+              <div style={{ ...st.card, textAlign: 'center', padding: 100, borderStyle: 'dashed' }}>
+                <p style={{ color: '#64748b', fontSize: 13 }}>No production history found.</p>
+              </div>
+            ) : briefs.map(b => (
+              <div key={b.id} style={{ ...st.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {statusIcon(b.status)}
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>{b.video_type} — {b.duration}</div>
-                      <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>Order ID: {b.id.slice(0, 8)} · Submitted {new Date(b.created_at).toLocaleDateString()}</div>
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{b.video_type} — {b.duration}</div>
                   </div>
-                  <span style={{ padding: '6px 12px', borderRadius: 999, background: `${statusColor(b.status)}15`, color: statusColor(b.status), fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{b.status}</span>
+                  <span style={{ padding: '4px 10px', borderRadius: 999, background: `${statusColor(b.status)}15`, color: statusColor(b.status), fontSize: 10, fontWeight: 800 }}>{b.status}</span>
                 </div>
-
-                <div style={{ background: 'rgba(7,16,31,0.4)', borderRadius: 12, padding: 14 }}>
-                  <p style={{ fontSize: 13, color: '#cbd5e1', lineHeight: 1.6 }}>{b.description}</p>
-                </div>
-
-                {(b.admin_notes || b.delivery_url) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(51,65,85,0.3)', paddingTop: 16 }}>
-                    {b.admin_notes && (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <div style={{ flexShrink: 0, marginTop: 2 }}><CheckCircle style={{ width: 14, height: 14, color: '#34d399' }} /></div>
-                        <div>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#34d399', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Note from Creative Team</span>
-                          <p style={{ fontSize: 12, color: '#94a3b8' }}>{b.admin_notes}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {b.delivery_url && (
-                      <div style={{ marginTop: 4 }}>
-                        <a 
-                          href={b.delivery_url} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          style={{ 
-                            ...st.btn, 
-                            width: '100%', 
-                            justifyContent: 'center', 
-                            background: 'linear-gradient(135deg, #34d399, #059669)', 
-                            color: '#fff',
-                            boxShadow: '0 4px 12px rgba(52, 211, 153, 0.2)'
-                          }}
-                        >
-                          <Video style={{ width: 16, height: 16 }} /> View Final Creative Video
-                        </a>
-                      </div>
-                    )}
-                  </div>
+                {b.delivery_url && (
+                  <a href={b.delivery_url} target="_blank" rel="noreferrer" style={{ ...st.btn, width: '100%', justifyContent: 'center', background: '#34d399', color: '#fff' }}>
+                    <Video size={16} /> Download Delivered Content
+                  </a>
                 )}
-
-                {b.reference_url && !b.delivery_url && (
-                  <div style={{ fontSize: 12, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <LinkIcon style={{ width: 12, height: 12 }} /> 
-                    <span>Reference: </span>
-                    <a href={b.reference_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: '#60a5fa', opacity: 0.8 }}>View attachment</a>
-                  </div>
-                )}
+                {b.admin_notes && <div style={{ fontSize: 12, color: '#94a3b8', padding: 12, background: 'rgba(52,211,153,0.05)', borderRadius: 10, borderLeft: '3px solid #34d399' }}>{b.admin_notes}</div>}
               </div>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* Partners Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: 8 }}>
+             <Share2 size={18} className="text-blue-400" />
+             Expert Partners
+           </h2>
+           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+             {partners.map(p => (
+               <div key={p.id} style={{ ...st.card, padding: 16, background: 'rgba(59,130,246,0.05)' }}>
+                 <div style={{ fontSize: 10, fontBlack: '900', color: '#60a5fa', uppercase: 'true', trackingWidest: '0.1em', marginBottom: 4 }}>{p.service.replace('-', ' ')}</div>
+                 <h4 style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>{p.partner_name}</h4>
+                 <p style={{ fontSize: 11, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>{p.description}</p>
+                 <a 
+                   href={p.url} 
+                   target="_blank" 
+                   rel="noreferrer" 
+                   onClick={() => trackClick(p)}
+                   style={{ fontSize: 12, fontWeight: 700, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                 >
+                   Connect to Partner <ExternalLink size={12} />
+                 </a>
+               </div>
+             ))}
+             {partners.length === 0 && (
+               <p style={{ fontSize: 12, color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>No partners listed yet.</p>
+             )}
+           </div>
+        </div>
       </div>
     </div>
+  );
+}
+ </div>
   );
 }
