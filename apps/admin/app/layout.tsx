@@ -16,6 +16,7 @@ const navItems = [
   { name: 'Merchants', href: '/merchants', icon: '👥' },
   { name: 'User Management', href: '/users', icon: '🛡️' },
   { name: 'Creative Studio', href: '/creative-studio', icon: '🎨' },
+  { name: 'Partner Links', href: '/partnerships', icon: '🔗' },
   { name: 'CRM Import', href: '/crm-import', icon: '📤' },
   { name: 'Feature Toggles', href: '/feature-toggles', icon: '⚙️' },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: '📦' },
