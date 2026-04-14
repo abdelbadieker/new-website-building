@@ -49,6 +49,11 @@ export default function FulfillmentPage() {
     let imageUrl: string | null = null;
 
     if (imageFile) {
+      if (imageFile.size > 50 * 1024 * 1024) {
+        alert('Image is too large. Max size is 50MB.');
+        setSubmitting(false);
+        return;
+      }
       const ext = imageFile.name.split('.').pop();
       const fileName = `fulfillment-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from('product-images').upload(fileName, imageFile);

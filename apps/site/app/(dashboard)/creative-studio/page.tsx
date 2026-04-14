@@ -50,9 +50,8 @@ export default function CreativeStudioPage() {
   };
 
   const uploadReferenceVideo = async (file: File): Promise<string | null> => {
-    // 50MB Limit check (Supabase default)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File is too large. Supabase Storage has a 50MB limit by default. Please compress your video or use a URL instead.');
+    if (file.size > 200 * 1024 * 1024) { // 200MB limit for videos
+      alert('File is too large. Max size for video references is 200MB.');
       return null;
     }
 

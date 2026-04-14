@@ -19,7 +19,7 @@ export default function ProductsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = async () => {
-    const { data } = await supabase.from('products').select('*').or('is_fulfillment.is.null,is_fulfillment.eq.false').order('created_at', { ascending: false });
+    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     setProducts(data || []);
     setLoading(false);
   };
@@ -38,8 +38,8 @@ export default function ProductsPage() {
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit for images
-      alert('Image is too large. Max size is 10MB.');
+    if (file.size > 50 * 1024 * 1024) { // Increased to 50MB for large photos
+      alert('Image is too large. Max size is 50MB.');
       return null;
     }
     const ext = file.name.split('.').pop();
@@ -204,7 +204,12 @@ export default function ProductsPage() {
                       </div>
                     )}
                     <div>
-                      <div style={{ fontWeight: 600, color: '#e2e8f0' }}>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontWeight: 600, color: '#e2e8f0' }}>{p.name}</div>
+                        {p.is_fulfillment && (
+                          <span style={{ fontSize: 9, fontWeight: 900, background: 'rgba(52,211,153,0.1)', color: '#34d399', padding: '1px 5px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(52,211,153,0.2)' }}>Fulfillment</span>
+                        )}
+                      </div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{p.description?.slice(0, 50)}</div>
                     </div>
                   </div>
