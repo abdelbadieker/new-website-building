@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,16 +20,24 @@ export async function POST(req: Request) {
   });
 
   try {
-    // 1. Verify Admin Session (Mock check matching middleware)
-    const token = req.headers.get('cookie')?.split('; ')
-      .find(row => row.startsWith('admin_token='))
-      ?.split('=')[1];
+    // Verify Admin Session via cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin_token')?.value;
 
     if (!token || token !== 'mock_superadmin_jwt_123') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      // Fallback: also try parsing from request headers
+      const cookieHeader = req.headers.get('cookie') || '';
+      const headerToken = cookieHeader.split('; ')
+        .find(row => row.startsWith('admin_token='))
+        ?.split('=')[1];
+      
+      if (!headerToken || headerToken !== 'mock_superadmin_jwt_123') {
+        console.error('Auth failed. Cookie token:', token, 'Header token:', headerToken);
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
-    // 2. Parse request body
+    // Parse request body
     const body = await req.json();
     const { id, ...updates } = body;
 
@@ -36,7 +45,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // 3. Perform Update using Service Role
+    console.log(`Admin API: Updating profile ${id} with:`, JSON.stringify(updates));
+
+    // Perform Update using Service Role
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(updates)
@@ -49,9 +60,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('Admin API: Update successful:', data);
     return NextResponse.json({ success: true, data });
-  } catch (err) {
+  } catch (err: any) {
     console.error('API error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
 }

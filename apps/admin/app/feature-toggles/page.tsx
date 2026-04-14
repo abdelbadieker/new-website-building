@@ -43,6 +43,7 @@ export default function FeatureToggles() {
       const res = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id: profileId, features: newFeatures })
       });
       

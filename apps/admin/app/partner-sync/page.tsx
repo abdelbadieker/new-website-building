@@ -19,12 +19,24 @@ export default function PartnerSync() {
   const [tab, setTab] = useState<'partners' | 'clicks' | 'briefs'>('partners');
 
   const fetchAll = async () => {
-    const [l, c, b] = await Promise.all([
+    const [l, c] = await Promise.all([
       supabase.from('partner_links').select('*').order('created_at', { ascending: false }),
       supabase.from('partner_clicks').select('*').order('clicked_at', { ascending: false }).limit(50),
-      supabase.from('creative_briefs').select('*').order('created_at', { ascending: false }),
     ]);
-    setLinks(l.data || []); setClicks(c.data || []); setBriefs(b.data || []); setLoading(false);
+    setLinks(l.data || []); setClicks(c.data || []);
+
+    // Fetch briefs via admin API to bypass RLS
+    try {
+      const briefsRes = await fetch('/api/admin/briefs', { credentials: 'include' });
+      if (briefsRes.ok) {
+        const briefsData = await briefsRes.json();
+        setBriefs(briefsData.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching briefs:', err);
+    }
+
+    setLoading(false);
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchAll(); }, []);
@@ -47,9 +59,20 @@ export default function PartnerSync() {
   };
 
   const updateBriefStatus = async (id: string, status: string, notes: string) => {
-    await supabase.from('creative_briefs').update({ status, admin_notes: notes }).eq('id', id);
-    await supabase.from('activity_logs').insert({ action: `Updated creative brief status to: ${status}`, entity_type: 'creative' });
-    fetchAll();
+    try {
+      const res = await fetch('/api/admin/briefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, status, admin_notes: notes }),
+      });
+      if (!res.ok) throw new Error('Failed to update brief');
+      await supabase.from('activity_logs').insert({ action: `Updated creative brief status to: ${status}`, entity_type: 'creative' });
+      fetchAll();
+    } catch (err) {
+      console.error('Error updating brief:', err);
+      alert('Error updating brief status');
+    }
   };
 
   const inp = "w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm";
@@ -164,10 +187,21 @@ export default function PartnerSync() {
                 </div>
               </div>
               <p className="text-sm text-slate-300 mb-2">{b.description}</p>
+              
+              {/* Reference URL / Video */}
               {b.reference_url && (
-                <div className="text-xs text-blue-400 mb-1">📎 Reference: <a href={b.reference_url} target="_blank" rel="noreferrer" className="underline">{b.reference_url}</a></div>
+                <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3 mb-2">
+                  <div className="text-xs text-blue-400 font-semibold mb-2">📎 Reference Attached:</div>
+                  {b.reference_url.match(/\.(mp4|mov|webm|ogg)($|\?)/) ? (
+                    <video src={b.reference_url} controls className="w-full max-h-48 rounded-md" />
+                  ) : (
+                    <a href={b.reference_url} target="_blank" rel="noreferrer" className="text-xs text-blue-400 underline break-all">{b.reference_url}</a>
+                  )}
+                </div>
               )}
-              {b.reference_description && <p className="text-xs text-slate-500 mb-2">Note: {b.reference_description}</p>}
+              
+              {b.reference_description && <p className="text-xs text-slate-500 mb-2">📝 Reference Note: {b.reference_description}</p>}
+              
               <div className="mt-3 pt-3 border-t border-slate-800">
                 <label className="text-xs text-slate-500 block mb-1">Admin Notes:</label>
                 <div className="flex gap-2">

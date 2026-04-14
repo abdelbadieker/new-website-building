@@ -43,7 +43,8 @@ export default function FulfillmentEngine() {
     
     const { error } = await supabase.from('products').insert({
       ...newProduct,
-      merchant_id: selectedMerchant.id
+      merchant_id: selectedMerchant.id,
+      is_fulfillment: true
     });
 
     if (!error) {

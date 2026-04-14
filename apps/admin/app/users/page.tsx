@@ -40,6 +40,7 @@ export default function UserManagement() {
       const res = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id, is_banned: !currentStatus })
       });
       
@@ -64,6 +65,7 @@ export default function UserManagement() {
       const res = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id, plan })
       });
       

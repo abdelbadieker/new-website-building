@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText } from 'lucide-react';
+import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText, Upload, Video, X } from 'lucide-react';
 
 type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; created_at: string };
 
@@ -19,6 +19,10 @@ export default function CreativeStudioPage() {
     reference_description: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+  const [referencePreview, setReferencePreview] = useState<string | null>(null);
+  const [referenceMode, setReferenceMode] = useState<'url' | 'upload'>('url');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBriefs = useCallback(async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -37,13 +41,50 @@ export default function CreativeStudioPage() {
     fetchBriefs();
   }, [supabase.auth, fetchBriefs]);
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setReferenceFile(file);
+      setReferencePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const uploadReferenceVideo = async (file: File): Promise<string | null> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from('creative-references').upload(fileName, file);
+    if (error) { console.error('Upload error:', error); return null; }
+    const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
+    return urlData.publicUrl;
+  };
+
   const handleSubmit = async () => {
     if (!form.description.trim() || !userEmail) return;
     setSubmitting(true);
-    await supabase.from('creative_briefs').insert({ ...form, user_email: userEmail, status: 'Pending' });
+
+    let refUrl = form.reference_url;
+
+    // If uploading a file, upload it first
+    if (referenceMode === 'upload' && referenceFile) {
+      const uploadedUrl = await uploadReferenceVideo(referenceFile);
+      if (uploadedUrl) refUrl = uploadedUrl;
+    }
+
+    await supabase.from('creative_briefs').insert({
+      video_type: form.video_type,
+      duration: form.duration,
+      description: form.description,
+      reference_url: refUrl,
+      reference_description: form.reference_description,
+      user_email: userEmail,
+      status: 'Pending',
+    });
+
     setSubmitting(false);
     setShowForm(false);
     setForm({ video_type: 'Short (TikTok/Reels)', duration: '30s', description: '', reference_url: '', reference_description: '' });
+    setReferenceFile(null);
+    setReferencePreview(null);
     fetchBriefs();
   };
 
@@ -79,7 +120,7 @@ export default function CreativeStudioPage() {
         <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7 }}>
           📹 Submit a creative brief and our team will produce professional video content for your brand. 
           You can request short-form (TikTok, Reels), marketing ads, or long-form content. 
-          Attach a reference video link to show us the style you want.
+          Upload a reference video or paste a link to show us the style you want.
         </p>
       </div>
 
@@ -114,12 +155,83 @@ export default function CreativeStudioPage() {
               <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Description / Brief *</label>
               <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...st.input, minHeight: 100, resize: 'vertical' }} placeholder="Describe what you want in the video: products to show, message, style, target audience..." />
             </div>
+
+            {/* Reference Video — Toggle between URL and Upload */}
             <div>
-              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>
-                <LinkIcon style={{ width: 12, height: 12, display: 'inline', marginRight: 4 }} />Reference Video Link (optional)
+              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 8 }}>
+                Reference Video (optional)
               </label>
-              <input value={form.reference_url} onChange={e => setForm({ ...form, reference_url: e.target.value })} style={st.input} placeholder="Paste a link to a video you like as reference (YouTube, TikTok, Instagram...)" />
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setReferenceMode('url')}
+                  style={{
+                    ...st.btn, padding: '6px 14px', fontSize: 12,
+                    background: referenceMode === 'url' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)',
+                    color: referenceMode === 'url' ? '#a78bfa' : '#64748b',
+                    border: referenceMode === 'url' ? '1px solid rgba(167,139,250,0.3)' : '1px solid transparent',
+                  }}
+                >
+                  <LinkIcon style={{ width: 12, height: 12 }} /> Paste URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReferenceMode('upload')}
+                  style={{
+                    ...st.btn, padding: '6px 14px', fontSize: 12,
+                    background: referenceMode === 'upload' ? 'rgba(167,139,250,0.15)' : 'rgba(51,65,85,0.2)',
+                    color: referenceMode === 'upload' ? '#a78bfa' : '#64748b',
+                    border: referenceMode === 'upload' ? '1px solid rgba(167,139,250,0.3)' : '1px solid transparent',
+                  }}
+                >
+                  <Upload style={{ width: 12, height: 12 }} /> Upload Video
+                </button>
+              </div>
+
+              {referenceMode === 'url' ? (
+                <input value={form.reference_url} onChange={e => setForm({ ...form, reference_url: e.target.value })} style={st.input} placeholder="Paste a link to a video you like as reference (YouTube, TikTok, Instagram...)" />
+              ) : (
+                <div>
+                  <input ref={fileInputRef} type="file" accept="video/mp4,video/mov,video/webm,video/quicktime,video/*" onChange={handleVideoSelect} style={{ display: 'none' }} />
+                  {referenceFile ? (
+                    <div style={{ border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: 12, background: 'rgba(167,139,250,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <Video style={{ width: 20, height: 20, color: '#a78bfa' }} />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{referenceFile.name}</div>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>{(referenceFile.size / (1024 * 1024)).toFixed(1)} MB</div>
+                          </div>
+                        </div>
+                        <button onClick={() => { setReferenceFile(null); setReferencePreview(null); }} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 4 }}>
+                          <X style={{ width: 16, height: 16 }} />
+                        </button>
+                      </div>
+                      {referencePreview && (
+                        <video src={referencePreview} controls style={{ width: '100%', maxHeight: 200, borderRadius: 8, marginTop: 10 }} />
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#a78bfa'; }}
+                      onDragLeave={e => { e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)'; }}
+                      onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)'; const f = e.dataTransfer.files[0]; if (f) { setReferenceFile(f); setReferencePreview(URL.createObjectURL(f)); } }}
+                      style={{
+                        border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: 32,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', transition: 'border-color 0.2s', background: 'rgba(7,16,31,0.4)',
+                      }}
+                    >
+                      <Upload style={{ width: 28, height: 28, color: '#475569', marginBottom: 8 }} />
+                      <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Click or drag & drop a video</span>
+                      <span style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>MP4, MOV, WEBM up to 50MB</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
             <div>
               <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Reference Description (optional)</label>
               <textarea value={form.reference_description} onChange={e => setForm({ ...form, reference_description: e.target.value })} style={{ ...st.input, minHeight: 60, resize: 'vertical' }} placeholder="Describe what you like about the reference video, what style you want..." />
@@ -129,7 +241,7 @@ export default function CreativeStudioPage() {
             <button onClick={handleSubmit} disabled={submitting || !form.description.trim()} style={{ ...st.btn, background: submitting || !form.description.trim() ? '#1e293b' : 'linear-gradient(135deg, #a78bfa, #7c3aed)', color: submitting || !form.description.trim() ? '#475569' : '#fff' }}>
               <Send style={{ width: 14, height: 14 }} />{submitting ? 'Sending...' : 'Submit Brief'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ ...st.btn, background: 'rgba(51,65,85,0.3)', color: '#94a3b8' }}>Cancel</button>
+            <button onClick={() => { setShowForm(false); setReferenceFile(null); setReferencePreview(null); }} style={{ ...st.btn, background: 'rgba(51,65,85,0.3)', color: '#94a3b8' }}>Cancel</button>
           </div>
         </div>
       )}
