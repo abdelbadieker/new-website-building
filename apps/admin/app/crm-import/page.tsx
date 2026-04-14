@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Link as LinkIcon, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Link as LinkIcon, FileSpreadsheet, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
@@ -161,15 +161,29 @@ export default function CRMImport() {
     }
 
     if (ext === '.pdf') {
-      // For PDF, try to extract text
       try {
-        const text = await file.text();
-        const parsed = parseTextDocument(text);
+        const pdfjs = await import('pdfjs-dist');
+        // Set worker for browser environment
+        pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+        
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map((item: any) => item.str);
+          fullText += strings.join(' ') + '\n';
+        }
+
+        const parsed = parseTextDocument(fullText);
         if (parsed.length === 0) {
           throw new Error('Could not extract structured data from PDF. Please convert to CSV or Excel format for best results.');
         }
         return parsed;
-      } catch {
+      } catch (err: any) {
+        console.error('PDF Parse Error:', err);
         throw new Error('Could not parse PDF file. PDF parsing has limitations — for best results, export your data as CSV or Excel.');
       }
     }
@@ -316,6 +330,12 @@ export default function CRMImport() {
                     <span className="text-[10px] text-slate-500">{(file.size / 1024).toFixed(1)} KB</span>
                     <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full font-semibold">{fileTypeLabel(file.name)}</span>
                   </div>
+                  <button 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); setError(null); }}
+                    className="absolute top-2 right-2 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 rounded-lg transition-colors border border-slate-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </>
               ) : (
                 <>

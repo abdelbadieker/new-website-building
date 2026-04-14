@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText, Upload, Video, X } from 'lucide-react';
 
-type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; created_at: string };
+type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; delivery_url: string; created_at: string };
 
 export default function CreativeStudioPage() {
   const supabase = createClient();
@@ -50,12 +50,29 @@ export default function CreativeStudioPage() {
   };
 
   const uploadReferenceVideo = async (file: File): Promise<string | null> => {
+    // 50MB Limit check (Supabase default)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File is too large. Supabase Storage has a 50MB limit by default. Please compress your video or use a URL instead.');
+      return null;
+    }
+
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('creative-references').upload(fileName, file);
-    if (error) { console.error('Upload error:', error); return null; }
-    const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
-    return urlData.publicUrl;
+    
+    try {
+      const { error } = await supabase.storage.from('creative-references').upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      if (error) throw error;
+      
+      const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
+      return urlData.publicUrl;
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      alert(`Upload failed: ${error.message || 'Unknown error'}. For large videos, ensure your connection is stable.`);
+      return null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -189,7 +206,22 @@ export default function CreativeStudioPage() {
               </div>
 
               {referenceMode === 'url' ? (
-                <input value={form.reference_url} onChange={e => setForm({ ...form, reference_url: e.target.value })} style={st.input} placeholder="Paste a link to a video you like as reference (YouTube, TikTok, Instagram...)" />
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    value={form.reference_url} 
+                    onChange={e => setForm({ ...form, reference_url: e.target.value })} 
+                    style={{ ...st.input, paddingRight: form.reference_url ? 40 : 14 }} 
+                    placeholder="Paste a link to a video you like (YouTube, TikTok, Instagram...)" 
+                  />
+                  {form.reference_url && (
+                    <button 
+                      onClick={() => setForm({ ...form, reference_url: '' })}
+                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
+                    >
+                      <X style={{ width: 14, height: 14 }} />
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div>
                   <input ref={fileInputRef} type="file" accept="video/mp4,video/mov,video/webm,video/quicktime,video/*" onChange={handleVideoSelect} style={{ display: 'none' }} />
@@ -257,20 +289,63 @@ export default function CreativeStudioPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {briefs.map(b => (
-              <div key={b.id} style={{ ...st.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {statusIcon(b.status)}
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{b.video_type} — {b.duration}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{b.description.slice(0, 80)}{b.description.length > 80 ? '...' : ''}</div>
-                    {b.reference_url && <div style={{ fontSize: 11, color: '#60a5fa', marginTop: 4 }}>📎 Reference attached</div>}
-                    {b.admin_notes && <div style={{ fontSize: 11, color: '#34d399', marginTop: 4 }}>💬 Team: {b.admin_notes}</div>}
+              <div key={b.id} style={{ ...st.card, display: 'flex', flexDirection: 'column', gap: 16, padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {statusIcon(b.status)}
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>{b.video_type} — {b.duration}</div>
+                      <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>Order ID: {b.id.slice(0, 8)} · Submitted {new Date(b.created_at).toLocaleDateString()}</div>
+                    </div>
                   </div>
+                  <span style={{ padding: '6px 12px', borderRadius: 999, background: `${statusColor(b.status)}15`, color: statusColor(b.status), fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{b.status}</span>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ padding: '4px 10px', borderRadius: 999, background: `${statusColor(b.status)}15`, color: statusColor(b.status), fontSize: 11, fontWeight: 600 }}>{b.status}</span>
-                  <div style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>{new Date(b.created_at).toLocaleDateString()}</div>
+
+                <div style={{ background: 'rgba(7,16,31,0.4)', borderRadius: 12, padding: 14 }}>
+                  <p style={{ fontSize: 13, color: '#cbd5e1', lineHeight: 1.6 }}>{b.description}</p>
                 </div>
+
+                {(b.admin_notes || b.delivery_url) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(51,65,85,0.3)', paddingTop: 16 }}>
+                    {b.admin_notes && (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ flexShrink: 0, marginTop: 2 }}><CheckCircle style={{ width: 14, height: 14, color: '#34d399' }} /></div>
+                        <div>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#34d399', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Note from Creative Team</span>
+                          <p style={{ fontSize: 12, color: '#94a3b8' }}>{b.admin_notes}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {b.delivery_url && (
+                      <div style={{ marginTop: 4 }}>
+                        <a 
+                          href={b.delivery_url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          style={{ 
+                            ...st.btn, 
+                            width: '100%', 
+                            justifyContent: 'center', 
+                            background: 'linear-gradient(135deg, #34d399, #059669)', 
+                            color: '#fff',
+                            boxShadow: '0 4px 12px rgba(52, 211, 153, 0.2)'
+                          }}
+                        >
+                          <Video style={{ width: 16, height: 16 }} /> View Final Creative Video
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {b.reference_url && !b.delivery_url && (
+                  <div style={{ fontSize: 12, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <LinkIcon style={{ width: 12, height: 12 }} /> 
+                    <span>Reference: </span>
+                    <a href={b.reference_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: '#60a5fa', opacity: 0.8 }}>View attachment</a>
+                  </div>
+                )}
               </div>
             ))}
           </div>

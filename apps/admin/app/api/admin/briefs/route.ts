@@ -52,11 +52,11 @@ export async function POST(req: Request) {
   });
 
   const body = await req.json();
-  const { id, status, admin_notes } = body;
+  const { id, status, admin_notes, delivery_url } = body;
 
   const { error } = await supabaseAdmin
     .from('creative_briefs')
-    .update({ status, admin_notes })
+    .update({ status, admin_notes, delivery_url })
     .eq('id', id);
 
   if (error) {

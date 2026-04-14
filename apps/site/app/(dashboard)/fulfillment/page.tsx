@@ -164,7 +164,15 @@ export default function FulfillmentPage() {
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
                   <div onClick={() => fileInputRef.current?.click()} style={{ border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: imagePreview ? 0 : 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(7,16,31,0.4)', minHeight: 80, overflow: 'hidden' }}>
                     {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 10 }} />
+                      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 10 }} />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); }}
+                          style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+                        >
+                          <X style={{ width: 12, height: 12 }} />
+                        </button>
+                      </div>
                     ) : (
                       <>
                         <Upload style={{ width: 22, height: 22, color: '#475569', marginBottom: 6 }} />

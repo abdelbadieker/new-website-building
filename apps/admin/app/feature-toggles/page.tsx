@@ -58,7 +58,7 @@ export default function FeatureToggles() {
     }
   };
 
-  const toggleColumns = ["CRM", "Chatbot", "Ecotrack", "Fulfillment", "Analytics", "Creative", "Web", "Estore"];
+  const toggleColumns = ["Overview", "Orders", "Products", "CRM", "Chatbot", "Ecotrack", "Fulfillment", "Analytics", "Creative", "Web", "Estore"];
 
   if (loading) return <div className="flex justify-center p-20"><div className="w-8 h-8 border-[3px] border-slate-700 border-t-emerald-400 rounded-full animate-spin" /></div>;
 

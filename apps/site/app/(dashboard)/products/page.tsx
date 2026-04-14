@@ -38,12 +38,23 @@ export default function ProductsPage() {
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit for images
+      alert('Image is too large. Max size is 10MB.');
+      return null;
+    }
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(fileName, file);
-    if (error) { console.error('Upload error:', error); return null; }
-    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
-    return urlData.publicUrl;
+    
+    try {
+      const { error } = await supabase.storage.from('product-images').upload(fileName, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+      return urlData.publicUrl;
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      alert(`Upload failed: ${err.message || 'Unknown error'}`);
+      return null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -140,6 +151,14 @@ export default function ProductsPage() {
                 {imagePreview ? (
                   <div style={{ position: 'relative', width: '100%' }}>
                     <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 10 }} />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); }}
+                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: 'transform 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <X style={{ width: 14, height: 14 }} />
+                    </button>
                     <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.7)', padding: '4px 10px', borderRadius: 6, fontSize: 11, color: '#34d399', fontWeight: 600 }}>
                       Click to change
                     </div>

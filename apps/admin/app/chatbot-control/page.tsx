@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { X, Video } from 'lucide-react';
 
 function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
@@ -116,12 +117,22 @@ export default function ChatbotControl() {
             <div>
               <label className="block text-xs text-slate-400 mb-1 font-medium">Video URL / Source</label>
               <div className="flex gap-2">
-                <input 
-                  value={demoForm.video_url} 
-                  onChange={e => setDemoForm({ ...demoForm, video_url: e.target.value })} 
-                  placeholder="https://..." 
-                  className="flex-1 bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm" 
-                />
+                <div className="relative flex-1">
+                  <input 
+                    value={demoForm.video_url} 
+                    onChange={e => setDemoForm({ ...demoForm, video_url: e.target.value })} 
+                    placeholder="https://..." 
+                    className="w-full bg-[#07101F] border border-slate-700 rounded-lg px-4 py-2.5 text-white outline-none text-sm pr-10" 
+                  />
+                  {demoForm.video_url && (
+                    <button 
+                      onClick={() => setDemoForm({ ...demoForm, video_url: '' })}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 <label className="relative cursor-pointer bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
                   {uploading ? 'Uploading...' : 'Import Video'}
                   <input 

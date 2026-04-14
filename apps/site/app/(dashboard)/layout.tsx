@@ -8,21 +8,22 @@ import {
   LayoutDashboard, ShoppingBag, Package, Users, MapPin, 
   Mail, Sparkles, Paintbrush, Globe, Store, 
   PieChart, CreditCard, HelpCircle, Search, Bell, LogOut,
-  ChevronRight, ChevronDown, Menu, X, User
+  ChevronRight, ChevronDown, Menu, X, User, Lock
 } from 'lucide-react';
+import SectionLock from '@/components/SectionLock';
 
 const navItems = [
-  { name: 'Overview', href: '/overview', icon: LayoutDashboard },
-  { name: 'Orders', href: '/orders', icon: ShoppingBag },
-  { name: 'Products', href: '/products', icon: Package },
-  { name: 'CRM', href: '/crm', icon: Users },
-  { name: 'Ecotrack', href: '/ecotrack', icon: MapPin },
-  { name: 'Fulfillment', href: '/fulfillment', icon: Mail },
-  { name: 'AI Chatbot', href: '/ai-chatbot', icon: Sparkles },
-  { name: 'Creative Studio', href: '/creative-studio', icon: Paintbrush },
-  { name: 'Web Creation', href: '/web-creation', icon: Globe },
-  { name: 'E-Store', href: '/estore', icon: Store },
-  { name: 'Analytics', href: '/analytics', icon: PieChart },
+  { name: 'Overview', href: '/overview', icon: LayoutDashboard, feature: 'overview' },
+  { name: 'Orders', href: '/orders', icon: ShoppingBag, feature: 'orders' },
+  { name: 'Products', href: '/products', icon: Package, feature: 'products' },
+  { name: 'CRM', href: '/crm', icon: Users, feature: 'crm' },
+  { name: 'Ecotrack', href: '/ecotrack', icon: MapPin, feature: 'ecotrack' },
+  { name: 'Fulfillment', href: '/fulfillment', icon: Mail, feature: 'fulfillment' },
+  { name: 'AI Chatbot', href: '/ai-chatbot', icon: Sparkles, feature: 'chatbot' },
+  { name: 'Creative Studio', href: '/creative-studio', icon: Paintbrush, feature: 'creative' },
+  { name: 'Web Creation', href: '/web-creation', icon: Globe, feature: 'web' },
+  { name: 'E-Store', href: '/estore', icon: Store, feature: 'estore' },
+  { name: 'Analytics', href: '/analytics', icon: PieChart, feature: 'analytics' },
   { name: 'Billing', href: '/billing', icon: CreditCard },
   { name: 'Support', href: '/support', icon: HelpCircle },
 ];
@@ -48,6 +49,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [navOpen, setNavOpen] = useState(true);
+  const [features, setFeatures] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const supabase = createClient();
@@ -57,9 +59,11 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
       if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, is_banned')
+          .select('full_name, is_banned, features')
           .eq('id', data.user.id)
           .single();
+        
+        if (profile?.features) setFeatures(profile.features);
 
         if (profile?.is_banned) {
           alert('Your account has been restricted by the administrator.');
@@ -173,48 +177,52 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           </button>
 
           {/* Nav Items */}
-          {navOpen && navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link 
-                key={item.name} 
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '9px 14px',
-                  paddingLeft: 24,
-                  borderRadius: 10,
-                  textDecoration: 'none',
-                  fontSize: 13,
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? '#34d399' : '#94a3b8',
-                  background: isActive ? 'rgba(59,130,246,0.08)' : 'transparent',
-                  border: isActive ? '1px solid rgba(59,130,246,0.15)' : '1px solid transparent',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                    e.currentTarget.style.color = '#e2e8f0';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#94a3b8';
-                  }
-                }}
-              >
-                <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : '#64748b' }} />
-                <span>{item.name}</span>
-                {isActive && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
-              </Link>
-            );
-          })}
+            {navOpen && navItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              const isLocked = item.feature && features[item.feature] !== true;
+
+              return (
+                <Link 
+                  key={item.name} 
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '9px 14px',
+                    paddingLeft: 24,
+                    borderRadius: 10,
+                    textDecoration: 'none',
+                    fontSize: 13,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? '#34d399' : isLocked ? '#475569' : '#94a3b8',
+                    background: isActive ? 'rgba(59,130,246,0.08)' : 'transparent',
+                    border: isActive ? '1px solid rgba(59,130,246,0.15)' : '1px solid transparent',
+                    transition: 'all 0.2s',
+                    opacity: isLocked ? 0.7 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive && !isLocked) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                      e.currentTarget.style.color = '#e2e8f0';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive && !isLocked) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#94a3b8';
+                    }
+                  }}
+                >
+                  <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : isLocked ? '#1e293b' : '#64748b' }} />
+                  <span>{item.name}</span>
+                  {isLocked && <Lock style={{ width: 12, height: 12, marginLeft: 'auto', color: '#475569' }} />}
+                  {isActive && !isLocked && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
+                </Link>
+              );
+            })}
 
           {/* Logout — directly after nav items */}
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(51,65,85,0.4)' }}>
@@ -323,7 +331,13 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
         {/* Page Content */}
         <main style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            {children}
+            {(() => {
+              const currentItem = navItems.find(item => item.href === pathname);
+              if (currentItem?.feature && features[currentItem.feature] !== true) {
+                return <SectionLock title={currentItem.name} />;
+              }
+              return children;
+            })()}
           </div>
         </main>
       </div>
