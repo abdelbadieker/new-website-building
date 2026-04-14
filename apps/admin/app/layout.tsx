@@ -16,21 +16,16 @@ import {
   MessageSquare, 
   History, 
   Star,
-  Layers
+  Layers,
+  LifeBuoy
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Overview', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
   { name: 'Merchants & Users', href: '/merchants', icon: <Users size={20} /> },
-  { 
-    name: 'Creative Studio', 
-    href: '/creative-studio', 
-    icon: <Palette size={20} />,
-    subItems: [
-      { name: 'Briefs Pipeline', href: '/creative-studio' },
-      { name: 'Partner Links', href: '/partnerships' }
-    ]
-  },
+  { name: 'Creative Studio', href: '/creative-studio', icon: <Palette size={20} /> },
+  { name: 'Partner Links', href: '/partnerships', icon: <Share2 size={20} /> },
+  { name: 'Support Tickets', href: '/tickets', icon: <LifeBuoy size={20} /> },
   { name: 'CRM Hub', href: '/crm-import', icon: <Database size={20} /> },
   { name: 'Reviews Management', href: '/reviews', icon: <Star size={20} /> },
   { name: 'Services CMS', href: '/services', icon: <Layers size={20} /> },

@@ -22,20 +22,17 @@ export function MerchantsListClient({ initialMerchants }: { initialMerchants: Pr
     m.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleUpdate = async (id: string, updates: Partial<Profile>) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Permanently delete this merchant account? ALL stores, products, and orders will be purged. This is NOT reversible.')) return;
     setProcessingId(id);
     try {
       const res = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...updates })
+        body: JSON.stringify({ id, action: 'delete' })
       });
-
-      if (!res.ok) throw new Error('Failed to update account');
-
-      setMerchants(current => 
-        current.map(m => m.id === id ? { ...m, ...updates } : m)
-      );
+      if (!res.ok) throw new Error('Deletion failed');
+      setMerchants(current => current.filter(m => m.id !== id));
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -107,7 +104,7 @@ export function MerchantsListClient({ initialMerchants }: { initialMerchants: Pr
                 <td className="px-8 py-5 text-right text-slate-500 font-medium">
                   {new Date(m.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                 </td>
-                <td className="px-8 py-5">
+                 <td className="px-8 py-5">
                   <div className="flex items-center justify-center gap-2">
                     <button 
                       onClick={() => handleUpdate(m.id, { is_banned: !m.is_banned })}
@@ -118,10 +115,12 @@ export function MerchantsListClient({ initialMerchants }: { initialMerchants: Pr
                       {processingId === m.id ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" /> : (m.is_banned ? <Shield size={16} /> : <ShieldOff size={16} />)}
                     </button>
                     <button 
-                      className="w-9 h-9 bg-slate-800 text-slate-500 rounded-xl flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all border border-slate-700"
-                      title="Manage Store Settings"
+                      onClick={() => handleDelete(m.id)}
+                      disabled={processingId === m.id}
+                      className="w-9 h-9 bg-slate-800 text-red-500/50 hover:text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all border border-slate-700"
+                      title="Delete Account Permanently"
                     >
-                      <MoreVertical size={16} />
+                      {processingId === m.id ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" /> : <Trash2 size={16} />}
                     </button>
                   </div>
                 </td>

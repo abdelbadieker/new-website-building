@@ -72,30 +72,83 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
     }
   };
 
+  const handleDeleteBulk = async (statuses: string[]) => {
+    const targets = briefs.filter(b => statuses.includes(b.status));
+    if (targets.length === 0) return alert('No requests found for the selected cleanup filter.');
+    if (!confirm(`Delete all ${targets.length} ${statuses.join('/')} requests? This action is irreversible.`)) return;
+    
+    setProcessingId('bulk');
+    try {
+      for (const b of targets) {
+        await fetch('/api/admin/briefs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: b.id, action: 'delete' })
+        });
+      }
+      setBriefs(current => current.filter(b => !statuses.includes(b.status)));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const then = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
   return (
-    <div className="divide-y divide-slate-800">
-      {briefs.length === 0 ? (
-        <div className="p-20 text-center space-y-4">
-           <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-600">
-             <Video size={32} />
-           </div>
-           <p className="text-slate-500 font-medium">No client briefs detected in the production pipeline.</p>
-        </div>
-      ) : briefs.map((b) => (
+    <div className="space-y-6">
+      <div className="flex justify-end gap-3 px-8 py-4 bg-slate-900/30 border-b border-slate-800">
+        <button 
+          onClick={() => handleDeleteBulk(['Completed'])}
+          disabled={processingId === 'bulk'}
+          className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+        >
+          {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+          Prune Delivered
+        </button>
+        <button 
+          onClick={() => handleDeleteBulk(['In Progress', 'Pending'])}
+          disabled={processingId === 'bulk'}
+          className="px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+        >
+          {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+          Flush Active Pipeline
+        </button>
+      </div>
+
+      <div className="divide-y divide-slate-800">
+        {briefs.length === 0 ? (
+          <div className="p-20 text-center space-y-4">
+             <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-600">
+               <Video size={32} />
+             </div>
+             <p className="text-slate-500 font-medium">No client briefs detected in the production pipeline.</p>
+          </div>
+        ) : briefs.map((b) => (
         <div key={b.id} className="p-8 group hover:bg-slate-800/20 transition-all flex flex-col lg:flex-row gap-8">
           {/* Section 1: Client Metadata */}
           <div className="lg:w-1/4 space-y-4">
-             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-400 flex items-center justify-center shadow-inner">
                   <User size={20} />
                 </div>
                 <div>
                   <div className="text-white font-black text-sm">{b.user_email}</div>
                   <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                    <Calendar size={10} /> {new Date(b.created_at).toLocaleDateString()}
+                    <Clock size={10} /> {getRelativeTime(b.created_at)}
                   </div>
                 </div>
-             </div>
+              </div>
 
              <div className="p-4 bg-[#07101F] border border-slate-700 rounded-2xl space-y-3">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Production Status</label>
@@ -196,17 +249,17 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
              <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleDelete(b.id)}
-                  className="flex-1 py-3 bg-red-500/5 hover:bg-red-500/10 text-red-500/50 hover:text-red-500 border border-red-500/10 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  disabled={processingId === b.id}
+                  className="flex-1 py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                 >
-                  Terminate Request
-                </button>
-                <button className="w-12 h-12 bg-slate-800 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all border border-slate-700">
-                  <MoreVertical size={18} />
+                  {processingId === b.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  Terminate
                 </button>
              </div>
           </div>
         </div>
       ))}
     </div>
+  </div>
   );
 }

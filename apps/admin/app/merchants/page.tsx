@@ -20,9 +20,14 @@ export default async function MerchantsManagement() {
   
   // Aggregate stats for the top section
   const totalMerchants = allMerchants.length;
-  const growthPlanCount = allMerchants.filter(m => m.plan === 'Growth').length;
-  const enterprisePlanCount = allMerchants.filter(m => m.plan === 'Enterprise').length;
   const bannedCount = allMerchants.filter(m => m.is_banned).length;
+
+  const thisMonth = new Date().getMonth();
+  const thisYear = new Date().getFullYear();
+  const newMonthCount = allMerchants.filter(m => {
+    const d = new Date(m.created_at);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  }).length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -38,25 +43,17 @@ export default async function MerchantsManagement() {
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
           <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Growth Plans</p>
-            <p className="text-2xl font-black text-emerald-400">{growthPlanCount}</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">New This Month</p>
+            <p className="text-2xl font-black text-emerald-400">{newMonthCount}</p>
           </div>
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Award size={24} />
+            <Users size={24} />
           </div>
         </div>
-        <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
-          <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Enterprise</p>
-            <p className="text-2xl font-black text-blue-400">{enterprisePlanCount}</p>
-          </div>
-          <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Award size={24} />
-          </div>
-        </div>
+        
         <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
           <div>
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Account Bans</p>
@@ -66,13 +63,14 @@ export default async function MerchantsManagement() {
             <ShieldAlert size={24} />
           </div>
         </div>
+
         <div className="bg-[#0A1628] p-6 rounded-3xl border border-slate-800 flex items-center justify-between group shadow-lg">
           <div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">New this month</p>
-            <p className="text-2xl font-black text-slate-400">0</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Impact</p>
+            <p className="text-2xl font-black text-blue-400">{totalMerchants}</p>
           </div>
-           <div className="w-12 h-12 bg-slate-800 text-slate-400 rounded-2xl flex items-center justify-center">
-            <ShoppingBag size={24} />
+           <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Award size={24} />
           </div>
         </div>
       </div>

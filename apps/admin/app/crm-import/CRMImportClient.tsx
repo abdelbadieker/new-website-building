@@ -162,12 +162,20 @@ export default function CRMImportClient() {
 
       if (dataRows.length === 0) throw new Error('No data rows found.');
 
-      const finalRows = dataRows.map(row => ({ ...row, merchant_id: selectedMerchant }));
-      const { error: insertError } = await supabase.from('customers').insert(finalRows);
-      if (insertError) throw insertError;
+      // Call the server-side API to perform the injection with Super Admin privileges
+      const importRes = await fetch('/api/admin/crm/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: selectedMerchant, customers: dataRows })
+      });
 
-      setResults({ success: finalRows.length, failed: 0 });
-      await supabase.from('activity_logs').insert({ action: `Bulk CRM import: ${finalRows.length} rows`, entity_type: 'crm' });
+      if (!importRes.ok) {
+        const errData = await importRes.json();
+        throw new Error(errData.error || 'Import failed');
+      }
+
+      const { count } = await importRes.json();
+      setResults({ success: count, failed: 0 });
     } catch (err: any) {
       setError(err.message || 'Error processing import');
     } finally {

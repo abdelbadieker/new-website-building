@@ -1,5 +1,5 @@
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { Package, Users, ShoppingBag, DollarSign, MessageSquare, ArrowUpRight, Clock, Briefcase } from 'lucide-react';
+import { Package, Users, ShoppingBag, DollarSign, MessageSquare, ArrowUpRight, Clock, Briefcase, Palette, History } from 'lucide-react';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,9 @@ export default async function AdminDashboard() {
     { count: openTickets },
     { count: totalReviews },
     { count: totalCustomers },
-    { count: totalServices }
+    { count: totalServices },
+    { data: briefs },
+    { data: logs }
   ] = await Promise.all([
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
@@ -21,11 +23,18 @@ export default async function AdminDashboard() {
     supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('customers').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('services').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('creative_briefs').select('*').order('created_at', { ascending: false }).limit(5),
+    supabaseAdmin.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(10)
   ]);
 
   const allOrders = orders || [];
   const totalRevenue = allOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
-  const recentOrders = allOrders.slice(0, 8);
+  
+  // Create a unified activity feed
+  const activityFeed = [
+    ...(orders || []).map(o => ({ ...o, type: 'order', label: 'New Order', icon: ShoppingBag, color: 'text-blue-400' })),
+    ...(briefs || []).map(b => ({ ...b, type: 'brief', label: 'New Brief', icon: Palette, color: 'text-purple-400', customer_name: b.user_email, total: 0 })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
 
   const stats = [
     { label: 'Total Revenue', value: `DA ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -74,12 +83,9 @@ export default async function AdminDashboard() {
         <div className="lg:col-span-2 bg-[#0A1628] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
             <div className="flex items-center gap-3">
-              <ShoppingBag className="text-blue-400" size={20} />
-              <h3 className="font-bold text-lg">Recent Platform Activity</h3>
+              <History className="text-blue-400" size={20} />
+              <h3 className="font-bold text-lg text-white">Recent Platform Activity</h3>
             </div>
-            <button className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
-              View All Orders <ArrowUpRight size={14} />
-            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -93,24 +99,36 @@ export default async function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {recentOrders.length === 0 ? (
+                {activityFeed.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-8 py-12 text-center text-slate-500 italic">No orders recorded yet.</td>
+                    <td colSpan={5} className="px-8 py-12 text-center text-slate-500 italic">No activity recorded yet.</td>
                   </tr>
-                ) : recentOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-800/30 transition-colors">
+                ) : activityFeed.map((item: any) => (
+                  <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-8 py-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColors[o.status] || 'bg-slate-500/10 text-slate-500'}`}>
-                        {o.status}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit ${statusColors[item.status] || 'bg-slate-800 text-slate-500'}`}>
+                          {item.status || 'Pending'}
+                        </span>
+                        <span className="text-[8px] font-black text-slate-500 uppercase mt-1 tracking-tighter">{item.label}</span>
+                      </div>
                     </td>
-                    <td className="px-8 py-4 font-bold text-white">{o.customer_name}</td>
-                    <td className="px-8 py-4 text-right text-emerald-400 font-black">DA {o.total?.toLocaleString()}</td>
+                    <td className="px-8 py-4">
+                       <div className="flex items-center gap-2">
+                         <item.icon size={14} className={item.color} />
+                         <span className="font-bold text-white line-clamp-1">{item.customer_name || 'Anonymous'}</span>
+                       </div>
+                    </td>
+                    <td className="px-8 py-4 text-right text-emerald-400 font-black">
+                      {item.type === 'order' ? `DA ${item.total?.toLocaleString()}` : '--'}
+                    </td>
                     <td className="px-8 py-4 text-right">
-                       <code className="text-xs text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10">{o.tracking_code || 'N/A'}</code>
+                       <code className="text-[10px] text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10">
+                         {item.type === 'order' ? (item.tracking_code || 'N/A') : (item.video_type || 'Creative')}
+                       </code>
                     </td>
                     <td className="px-8 py-4 text-right text-slate-500 font-medium">
-                      {new Date(o.created_at).toLocaleDateString()}
+                      {new Date(item.created_at).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
@@ -128,28 +146,14 @@ export default async function AdminDashboard() {
             <h4 className="text-sm font-black uppercase tracking-widest opacity-70 mb-2">Pending Support</h4>
             <div className="text-5xl font-black mb-4">{openTickets}</div>
             <p className="text-blue-100 text-sm font-medium leading-relaxed mb-6">There are currently {openTickets} tickets awaiting response from the administrative team.</p>
-            <button className="w-full py-3 bg-white text-blue-700 font-black rounded-2xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20">
+            <Link 
+              href="/tickets" 
+              className="w-full py-3 bg-white text-blue-700 font-black rounded-2xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20 text-center block"
+            >
               Open Ticket Manager
-            </button>
+            </Link>
           </div>
 
-          <div className="bg-[#0A1628] rounded-3xl border border-slate-800 p-8 shadow-xl">
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-               Quick Actions
-            </h4>
-            <div className="grid grid-cols-1 gap-3">
-              <button className="w-full py-3 px-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all text-left">
-                Export Revenue Report
-              </button>
-              <button className="w-full py-3 px-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all text-left">
-                Generate Partner Invoice
-              </button>
-               <button className="w-full py-3 px-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all text-left">
-                Audit Security Logs
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
