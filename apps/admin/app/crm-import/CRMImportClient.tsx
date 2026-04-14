@@ -237,19 +237,7 @@ export default function CRMImportClient() {
         </div>
       </div>
 
-      {/* Main Import Zone */}
       <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-        {importMode === 'file' ? (
-          <div className="space-y-6">
-             <label className={`relative group w-full h-48 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/20'}`}>
-                <input type="file" className="hidden" accept={ACCEPT_STRING} onChange={handleFileChange} />
-                {file ? (
-                   <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-4">
-                        <CheckCircle2 size={24} />
-                      </div>
-                      <span className="text-sm font-black text-white px-8 text-center line-clamp-1">{file.name}</span>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(file.size / 1024).toFixed(1)} KB Ready</span>
                    </div>
                 ) : (
                   <div className="flex flex-col items-center text-slate-600 group-hover:text-slate-400 transition-colors">
@@ -290,16 +278,23 @@ export default function CRMImportClient() {
           </div>
         )}
 
-        <div className="mt-8 flex justify-center">
-            <button
-              onClick={handleImport}
-              disabled={importing || (importMode === 'file' ? !file : !googleSheetsUrl) || !selectedMerchant}
-              className={`px-12 py-5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:scale-[1.02] text-white font-black rounded-2xl shadow-2xl transition-all disabled:opacity-30 disabled:grayscale flex items-center gap-3 text-sm uppercase tracking-widest`}
-            >
-              {importing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              {importing ? 'Processing Data Pipeline...' : 'Confirm Bulk Ingestion'}
-            </button>
-        </div>
+            <div className="mt-8 flex flex-col items-center gap-4">
+                {file && (
+                   <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-2">
+                     <CheckCircle2 size={12} className="text-emerald-500" /> Target: {merchants.find(m => m.id === selectedMerchant)?.full_name}
+                   </div>
+                )}
+                <button
+                  onClick={handleImport}
+                  disabled={importing || (importMode === 'file' ? !file : !googleSheetsUrl) || !selectedMerchant}
+                  className={`px-12 py-5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:scale-[1.02] text-white font-black rounded-2xl shadow-2xl transition-all disabled:opacity-30 disabled:grayscale flex items-center gap-3 text-sm uppercase tracking-widest`}
+                >
+                  {importing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                  {importing ? 'Processing Data Pipeline...' : 'Confirm Bulk Ingestion'}
+                </button>
+            </div>
+          </>
+        )}
       </div>
 
       {error && (

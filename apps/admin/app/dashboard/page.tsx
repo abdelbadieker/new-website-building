@@ -33,9 +33,10 @@ export default async function AdminDashboard() {
   
   // Create a unified activity feed
   const activityFeed = [
-    ...(orders || []).map(o => ({ ...o, type: 'order', label: 'New Order', icon: ShoppingBag, color: 'text-blue-400' })),
-    ...(briefs || []).map(b => ({ ...b, type: 'brief', label: 'New Brief', icon: Palette, color: 'text-purple-400', customer_name: b.user_email, total: 0 })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
+    ...(orders || []).slice(0, 5).map(o => ({ ...o, type: 'order', label: 'Order Confirmed', icon: ShoppingBag, color: 'text-emerald-400' })),
+    ...(briefs || []).slice(0, 5).map(b => ({ ...b, type: 'brief', label: 'Production Brief', icon: Palette, color: 'text-purple-400', customer_name: b.user_email || 'Merchant', total: 0 })),
+    ...(allTickets || []).slice(0, 5).map(t => ({ ...t, type: 'ticket', label: 'Support Request', icon: MessageSquare, color: 'text-amber-400', customer_name: t.user_email, total: 0 })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
 
   const stats = [
     { label: 'Total Revenue', value: `DA ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -108,8 +109,12 @@ export default async function AdminDashboard() {
                   <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-8 py-4">
                       <div className="flex flex-col">
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit ${statusColors[item.status] || 'bg-slate-800 text-slate-500'}`}>
-                          {item.status || 'Pending'}
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit ${
+                          item.status === 'Completed' || item.status === 'Resolved' || item.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                          item.status === 'Pending' || item.status === 'Open' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                          'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        }`}>
+                          {item.status || 'Active'}
                         </span>
                         <span className="text-[8px] font-black text-slate-500 uppercase mt-1 tracking-tighter">{item.label}</span>
                       </div>
@@ -124,9 +129,11 @@ export default async function AdminDashboard() {
                       {item.type === 'order' ? `DA ${item.total?.toLocaleString()}` : '--'}
                     </td>
                     <td className="px-8 py-4 text-right">
-                       <code className="text-[10px] text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10">
-                         {item.type === 'order' ? (item.tracking_code || 'N/A') : (item.video_type || 'Creative')}
-                       </code>
+                      <code className="text-[10px] text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10">
+                        {item.type === 'order' ? (item.tracking_code || 'SHIP-ID') : 
+                         item.type === 'ticket' ? `TKT-${item.id.slice(0, 4).toUpperCase()}` :
+                         (item.video_type || 'CRM')}
+                      </code>
                     </td>
                     <td className="px-8 py-4 text-right text-slate-500 font-medium">
                       {new Date(item.created_at).toLocaleDateString()}

@@ -12,7 +12,10 @@ export default function FulfillmentEngine() {
   const [supabase] = useState(() => createClient());
   const [merchants, setMerchants] = useState<Profile[]>([]);
   const [selectedMerchant, setSelectedMerchant] = useState<Profile | null>(null);
+  const [activeTab, setActiveTab] = useState<'catalog' | 'orders'>('catalog');
   const [merchantProducts, setMerchantProducts] = useState<Product[]>([]);
+  const [merchantOrders, setMerchantOrders] = useState<any[]>([]);
+  const [orderFilter, setOrderFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -35,9 +38,24 @@ export default function FulfillmentEngine() {
     fetchMerchants();
   }, []);
 
-  const handleSelectMerchant = (merchant: Profile) => {
+  const handleSelectMerchant = async (merchant: Profile) => {
     setSelectedMerchant(merchant);
-    fetchMerchantProducts(merchant.id);
+    setLoading(true);
+    await Promise.all([
+      fetchMerchantProducts(merchant.id),
+      fetchMerchantOrders(merchant.id)
+    ]);
+    setLoading(false);
+  };
+
+  const fetchMerchantOrders = async (merchantId: string) => {
+    const { data } = await supabase.from('orders').select('*').eq('merchant_id', merchantId).order('created_at', { ascending: false });
+    setMerchantOrders(data || []);
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
+    if (!error && selectedMerchant) fetchMerchantOrders(selectedMerchant.id);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,7 +193,24 @@ export default function FulfillmentEngine() {
             </button>
           </div>
 
-          <div className="bg-[#0A1628] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
+          {/* Tab Navigation */}
+          <div className="flex gap-4 border-b border-slate-800 pb-2">
+            <button 
+              onClick={() => setActiveTab('catalog')}
+              className={`px-6 py-3 font-black text-xs uppercase tracking-widest transition-all border-b-2 ${activeTab === 'catalog' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            >
+              Inventory Catalog
+            </button>
+            <button 
+              onClick={() => setActiveTab('orders')}
+              className={`px-6 py-3 font-black text-xs uppercase tracking-widest transition-all border-b-2 ${activeTab === 'orders' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            >
+              Order Pipeline
+            </button>
+          </div>
+
+          {activeTab === 'catalog' ? (
+            <div className="bg-[#0A1628] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-left-4 duration-300">
             <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
                <h4 className="font-black text-white text-lg uppercase tracking-widest flex items-center gap-2">
                  <Package className="text-blue-400" /> Merchant Product Catalog
@@ -192,43 +227,86 @@ export default function FulfillmentEngine() {
                     <th className="px-8 py-5 text-center">Controls</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {merchantProducts.length === 0 ? (
-                    <tr><td colSpan={4} className="p-20 text-center text-slate-600 italic font-medium">This merchant has no products registered in the fulfillment pipeline.</td></tr>
-                  ) : merchantProducts.map(p => (
-                    <tr key={p.id} className="hover:bg-slate-800/30 transition-colors group">
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-xl bg-slate-800 overflow-hidden border border-slate-700 flex items-center justify-center shrink-0">
-                              {p.image_url ? (
-                                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <Package size={20} className="text-slate-600" />
-                              )}
-                           </div>
-                           <div>
-                              <div className="font-black text-white tracking-tight">{p.name}</div>
-                              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">SKU: {p.id.slice(0, 8)}</div>
-                           </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-center text-xs font-bold">
-                        <span className={`px-4 py-1.5 rounded-full border ${p.stock > 10 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
-                          {p.stock} Units Available
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-right font-black text-lg text-white">DA {p.price.toLocaleString()}</td>
-                      <td className="px-8 py-5 text-center">
-                        <button onClick={() => deleteProduct(p.id)} className="w-10 h-10 rounded-xl bg-slate-800 text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all flex items-center justify-center border border-slate-700">
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+               <div className="bg-[#0A1628] border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="relative w-full md:w-96">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                    <input 
+                      placeholder="Search by Tracking Code or Customer..."
+                      value={orderFilter}
+                      onChange={e => setOrderFilter(e.target.value)}
+                      className="w-full bg-[#07101F] border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-blue-500 transition-all font-bold"
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                     <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Pipeline Health: {merchantOrders.filter(o => o.status === 'Pending').length} Pending</span>
+                  </div>
+               </div>
+
+               <div className="bg-[#0A1628] border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                 <table className="w-full text-left text-sm">
+                   <thead>
+                     <tr className="bg-slate-800/10 text-slate-500 text-[10px] font-black uppercase tracking-widest border-b border-slate-800">
+                       <th className="px-8 py-5">Shipment Target</th>
+                       <th className="px-8 py-5">Carrier Code</th>
+                       <th className="px-8 py-5 text-center">Fulfillment State</th>
+                       <th className="px-8 py-5 text-right">Merchant Payout</th>
+                       <th className="px-8 py-5 text-center">Action</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-800">
+                     {merchantOrders.filter(o => 
+                        o.tracking_code?.toLowerCase().includes(orderFilter.toLowerCase()) || 
+                        o.customer_name?.toLowerCase().includes(orderFilter.toLowerCase())
+                      ).length === 0 ? (
+                        <tr><td colSpan={5} className="p-20 text-center text-slate-600 italic font-medium">No active shipments matching your search profile.</td></tr>
+                      ) : merchantOrders.filter(o => 
+                        o.tracking_code?.toLowerCase().includes(orderFilter.toLowerCase()) || 
+                        o.customer_name?.toLowerCase().includes(orderFilter.toLowerCase())
+                      ).map(o => (
+                        <tr key={o.id} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="px-8 py-5">
+                            <div className="font-black text-white">{o.customer_name}</div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase">{o.city}</div>
+                          </td>
+                          <td className="px-8 py-5 font-mono text-xs font-bold text-blue-400">
+                            {o.tracking_code}
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <select 
+                              value={o.status}
+                              onChange={(e) => updateOrderStatus(o.id, e.target.value)}
+                              className={`bg-[#07101F] border rounded-lg px-3 py-1.5 text-[10px] font-black uppercase outline-none transition-all ${
+                                o.status === 'Pending' ? 'border-amber-500/50 text-amber-500' :
+                                o.status === 'Confirmed' ? 'border-blue-500/50 text-blue-500' :
+                                o.status === 'On Delivery' ? 'border-indigo-500/50 text-indigo-400' :
+                                o.status === 'Delivered' ? 'border-emerald-500/50 text-emerald-400' :
+                                'border-red-500/50 text-red-400'
+                              }`}
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Confirmed">Confirmed</option>
+                              <option value="On Delivery">On Delivery</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Returned">Returned</option>
+                              <option value="Canceled">Canceled</option>
+                            </select>
+                          </td>
+                          <td className="px-8 py-5 text-right font-black text-white">DA {o.total?.toLocaleString()}</td>
+                          <td className="px-8 py-5 text-center">
+                             <a href={`mailto:${o.customer_email}`} className="text-slate-500 hover:text-white transition-colors">
+                               <Mail size={16} />
+                             </a>
+                          </td>
+                        </tr>
+                      ))}
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -105,29 +105,55 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
+  const [activeTab, setActiveTab] = useState<'Active' | 'Delivered' | 'All'>('Active');
+
+  const filteredBriefs = briefs.filter(b => {
+    if (activeTab === 'Active') return b.status !== 'Completed';
+    if (activeTab === 'Delivered') return b.status === 'Completed';
+    return true;
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end gap-3 px-8 py-4 bg-slate-900/30 border-b border-slate-800">
-        <button 
-          onClick={() => handleDeleteBulk(['Completed'])}
-          disabled={processingId === 'bulk'}
-          className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
-        >
-          {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-          Prune Delivered
-        </button>
-        <button 
-          onClick={() => handleDeleteBulk(['In Progress', 'Pending'])}
-          disabled={processingId === 'bulk'}
-          className="px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
-        >
-          {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-          Flush Active Pipeline
-        </button>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-8 py-6 bg-slate-900/30 border-b border-slate-800">
+        <div className="flex bg-[#07101F] p-1 rounded-2xl border border-slate-700">
+          {(['Active', 'Delivered', 'All'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === tab 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' 
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {tab} ({briefs.filter(b => tab === 'Active' ? b.status !== 'Completed' : tab === 'Delivered' ? b.status === 'Completed' : true).length})
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-3">
+          <button 
+            onClick={() => handleDeleteBulk(['Completed'])}
+            disabled={processingId === 'bulk'}
+            className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+          >
+            {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            Prune Delivered
+          </button>
+          <button 
+            onClick={() => handleDeleteBulk(['In Progress', 'Pending'])}
+            disabled={processingId === 'bulk'}
+            className="px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+          >
+            {processingId === 'bulk' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+            Flush Active Pipeline
+          </button>
+        </div>
       </div>
 
       <div className="divide-y divide-slate-800">
-        {briefs.length === 0 ? (
+        {filteredBriefs.length === 0 ? (
           <div className="p-20 text-center space-y-4">
              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-600">
                <Video size={32} />

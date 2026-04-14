@@ -40,6 +40,25 @@ export function MerchantsListClient({ initialMerchants }: { initialMerchants: Pr
     }
   };
 
+  const handleUpdate = async (id: string, updates: any) => {
+    setProcessingId(id);
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates })
+      });
+      if (!res.ok) throw new Error('Update failed');
+      
+      const { data } = await res.json();
+      setMerchants(current => current.map(m => m.id === id ? { ...m, ...updates } : m));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   return (
     <>
       <div className="px-8 py-6 border-b border-slate-800 flex flex-col md:flex-row justify-between gap-4 items-center bg-slate-800/10">

@@ -68,10 +68,10 @@ export function PartnershipsClient({ initialLinks }: { initialLinks: PLink[] }) 
 
   const services = [
     { id: 'web-creation', name: 'Web Creation' },
-    { id: 'marketing', name: 'Marketing Ads' },
-    { id: 'content', name: 'Content Production' },
-    { id: 'fulfillment', name: 'Fulfillment Services' }
+    { id: 'estore', name: 'Estore' }
   ];
+
+  const [form, setForm] = useState<Partial<PLink>>({ service: 'web-creation' });
 
   const inp = "w-full bg-[#07101F] border border-slate-700 rounded-xl px-4 py-3 text-white outline-none text-sm focus:border-blue-500 transition-all";
 

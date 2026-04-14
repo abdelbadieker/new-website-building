@@ -51,6 +51,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(true);
   const [features, setFeatures] = useState<Record<string, boolean>>({});
   const [userPlan, setUserPlan] = useState('Free');
+  const [lockedSections, setLockedSections] = useState<string[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -60,12 +61,13 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
       if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, is_banned, features, plan')
+          .select('full_name, is_banned, features, plan, locked_sections')
           .eq('id', data.user.id)
           .single();
         
         if (profile?.features) setFeatures(profile.features);
         if (profile?.plan) setUserPlan(profile.plan);
+        if (profile?.locked_sections) setLockedSections(profile.locked_sections);
 
         if (profile?.is_banned) {
           alert('Your account has been restricted by the administrator.');
@@ -101,19 +103,18 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
     'Enterprise': ['overview', 'orders', 'products', 'crm', 'ecotrack', 'fulfillment', 'chatbot', 'creative', 'web', 'estore', 'analytics', 'support']
   };
 
-  const isFeatureEnabled = (featureKey?: string) => {
-    if (!featureKey) return true;
+    // 1. Check Global Admin Lock (Highest Priority - Master Override)
+    if (lockedSections.includes(featureKey)) return false;
+
+    // 2. Check Plan Basics
     if (['overview', 'support', 'billing'].includes(featureKey)) return true;
     
-    // Administrative logic: Default to closed if no plan and no override
-    const activePlan = userPlan || 'Free';
-    
-    // 1. Check custom overrides from Admin Hub (Highest Priority)
+    // 3. Check custom overrides from Admin Hub (Deprecated but preserved for compatibility)
     if (features[featureKey] === true) return true;
     if (features[featureKey] === false) return false;
     
-    // 2. Check Plan Defaults
-    const defaults = planDefaultsByTier[activePlan] || planDefaultsByTier['Free'];
+    // 4. Check Plan Defaults
+    const defaults = planDefaultsByTier[userPlan || 'Free'] || planDefaultsByTier['Free'];
     return defaults.includes(featureKey);
   };
 

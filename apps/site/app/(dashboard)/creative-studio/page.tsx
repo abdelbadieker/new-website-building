@@ -56,8 +56,8 @@ export default function CreativeStudioPage() {
   };
 
   const uploadReferenceVideo = async (file: File): Promise<string | null> => {
-    if (file.size > 200 * 1024 * 1024) { // 200MB limit for videos
-      alert('File is too large. Max size for video references is 200MB.');
+    if (file.size > 100 * 1024 * 1024) { // 100MB safety limit
+      alert('File size exceeds the 100MB threshold for reference videos.');
       return null;
     }
 
@@ -65,48 +65,64 @@ export default function CreativeStudioPage() {
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     
     try {
-      const { error } = await supabase.storage.from('creative-references').upload(fileName, file, {
+      // Use a race to implement a 2-minute timeout for large uploads
+      const uploadPromise = supabase.storage.from('creative-references').upload(fileName, file, {
         cacheControl: '3600',
         upsert: false
       });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Transmission timeout: Connection too slow for this file size.')), 120000)
+      );
+
+      const { data, error } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+      
       if (error) throw error;
       
       const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
       return urlData.publicUrl;
     } catch (error: any) {
-      console.error('Upload error:', error);
-      alert(`Upload failed: ${error.message || 'Unknown error'}.`);
+      console.error('Core Transmission Error:', error);
+      alert(`Critical: ${error.message || 'The data link was interrupted'}.`);
       return null;
     }
   };
 
   const handleSubmit = async () => {
-    if (!form.description.trim() || !userEmail) return;
-    setSubmitting(true);
+    try {
+      let refUrl = form.reference_url;
 
-    let refUrl = form.reference_url;
+      if (referenceMode === 'upload' && referenceFile) {
+        const uploadedUrl = await uploadReferenceVideo(referenceFile);
+        if (!uploadedUrl) {
+          setSubmitting(false);
+          return; // Stop if upload failed
+        }
+        refUrl = uploadedUrl;
+      }
 
-    if (referenceMode === 'upload' && referenceFile) {
-      const uploadedUrl = await uploadReferenceVideo(referenceFile);
-      if (uploadedUrl) refUrl = uploadedUrl;
+      const { error } = await supabase.from('creative_briefs').insert({
+        video_type: form.video_type,
+        duration: form.duration,
+        description: form.description,
+        reference_url: refUrl,
+        reference_description: form.reference_description,
+        user_email: userEmail,
+        status: 'Pending',
+      });
+
+      if (error) throw error;
+
+      setShowForm(false);
+      setForm({ video_type: 'Short (TikTok/Reels)', duration: '30s', description: '', reference_url: '', reference_description: '' });
+      setReferenceFile(null);
+      setReferencePreview(null);
+      fetchBriefs();
+    } catch (err: any) {
+       alert(`Submission failed: ${err.message}`);
+    } finally {
+      setSubmitting(false);
     }
-
-    await supabase.from('creative_briefs').insert({
-      video_type: form.video_type,
-      duration: form.duration,
-      description: form.description,
-      reference_url: refUrl,
-      reference_description: form.reference_description,
-      user_email: userEmail,
-      status: 'Pending',
-    });
-
-    setSubmitting(false);
-    setShowForm(false);
-    setForm({ video_type: 'Short (TikTok/Reels)', duration: '30s', description: '', reference_url: '', reference_description: '' });
-    setReferenceFile(null);
-    setReferencePreview(null);
-    fetchBriefs();
   };
 
   const trackClick = async (partner: PLink) => {
@@ -235,14 +251,39 @@ export default function CreativeStudioPage() {
             </div>
           )}
 
+          {/* Delivered Assets Quick Access */}
+          {briefs.some(b => b.status === 'Completed') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#34d399', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle size={18} /> Delivered Assets
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                {briefs.filter(b => b.status === 'Completed').map(b => (
+                  <div key={`delivered-${b.id}`} style={{ ...st.card, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.05)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#34d399', marginBottom: 8 }}>{b.video_type}</div>
+                    <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 16, lineClamp: 2, overflow: 'hidden', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>{b.description}</p>
+                    <a 
+                      href={b.delivery_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      style={{ ...st.btn, width: '100%', justifyContent: 'center', background: '#34d399', color: '#fff', boxShadow: '0 4px 12px rgba(52,211,153,0.2)' }}
+                    >
+                      <Video size={14} /> Open Cloud Drive / Video
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Previous Briefs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Recent Submissions</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Production Pipeline</h2>
             {briefs.length === 0 ? (
               <div style={{ ...st.card, textAlign: 'center', padding: 100, borderStyle: 'dashed' }}>
                 <p style={{ color: '#64748b', fontSize: 13 }}>No production history found.</p>
               </div>
-            ) : briefs.map(b => (
+            ) : briefs.filter(b => b.status !== 'Completed').map(b => (
               <div key={b.id} style={{ ...st.card, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -251,12 +292,7 @@ export default function CreativeStudioPage() {
                   </div>
                   <span style={{ padding: '4px 10px', borderRadius: 999, background: `${statusColor(b.status)}15`, color: statusColor(b.status), fontSize: 10, fontWeight: 800 }}>{b.status}</span>
                 </div>
-                {b.delivery_url && (
-                  <a href={b.delivery_url} target="_blank" rel="noreferrer" style={{ ...st.btn, width: '100%', justifyContent: 'center', background: '#34d399', color: '#fff' }}>
-                    <Video size={16} /> Download Delivered Content
-                  </a>
-                )}
-                {b.admin_notes && <div style={{ fontSize: 12, color: '#94a3b8', padding: 12, background: 'rgba(52,211,153,0.05)', borderRadius: 10, borderLeft: '3px solid #34d399' }}>{b.admin_notes}</div>}
+                {b.admin_notes && <div style={{ fontSize: 12, color: '#94a3b8', padding: 12, background: 'rgba(96,165,250,0.05)', borderRadius: 10, borderLeft: '3px solid #60a5fa' }}>{b.admin_notes}</div>}
               </div>
             ))}
           </div>
@@ -271,7 +307,7 @@ export default function CreativeStudioPage() {
            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
              {partners.map(p => (
                <div key={p.id} style={{ ...st.card, padding: 16, background: 'rgba(59,130,246,0.05)' }}>
-                 <div style={{ fontSize: 10, fontBlack: '900', color: '#60a5fa', uppercase: 'true', trackingWidest: '0.1em', marginBottom: 4 }}>{p.service.replace('-', ' ')}</div>
+                 <div style={{ fontSize: 10, fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{p.service.replace('-', ' ')}</div>
                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>{p.partner_name}</h4>
                  <p style={{ fontSize: 11, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>{p.description}</p>
                  <a 
@@ -292,8 +328,5 @@ export default function CreativeStudioPage() {
         </div>
       </div>
     </div>
-  );
-}
- </div>
   );
 }

@@ -141,14 +141,20 @@ export default function ServicesListClient({ initialServices }: { initialService
               
               <div className="mt-auto pt-6 border-t border-slate-800 flex justify-between items-center">
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{service.category}</span>
-                 <div className="flex items-center gap-3">
-                    <button onClick={() => setEditingService(service)} className="text-slate-600 hover:text-cyan-400 transition-colors">
-                       <Edit2 size={16} />
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setEditingService(service)} 
+                      className="px-4 py-2 bg-slate-800 text-blue-400 hover:text-white hover:bg-blue-600 rounded-xl transition-all flex items-center gap-2 border border-slate-700 text-[10px] font-black uppercase tracking-widest"
+                    >
+                       <Edit2 size={14} /> Edit Service
                     </button>
-                    <button onClick={() => deleteService(service.id)} className="text-slate-600 hover:text-red-500 transition-colors">
+                    <button 
+                      onClick={() => deleteService(service.id)} 
+                      className="w-10 h-10 bg-slate-800 text-slate-600 hover:text-red-500 rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-all border border-slate-700"
+                    >
                        <Trash2 size={16} />
                     </button>
-                 </div>
+                  </div>
               </div>
             </div>
           );

@@ -28,18 +28,27 @@ export async function POST(req: Request) {
       merchant_id: merchantId
     }));
 
-    // Split into chunks of 100 to avoid payload limits if needed, but for now direct insert
-    const { error } = await supabaseAdmin.from('customers').insert(finalRows);
+    // Split into chunks of 100 to avoid payload limits OR timeout during large inserts
+    const CHUNK_SIZE = 100;
+    let totalInserted = 0;
 
-    if (error) throw error;
+    for (let i = 0; i < finalRows.length; i += CHUNK_SIZE) {
+      const chunk = finalRows.slice(i, i + CHUNK_SIZE);
+      const { error } = await supabaseAdmin.from('customers').insert(chunk);
+      if (error) {
+        console.error(`Error inserting chunk ${i / CHUNK_SIZE}:`, error);
+        throw error;
+      }
+      totalInserted += chunk.length;
+    }
 
     // Log the activity
     await supabaseAdmin.from('activity_logs').insert({
-      action: `Bulk CRM Injection: ${finalRows.length} contacts for Merchant ID ${merchantId}`,
+      action: `Bulk CRM Injection: ${totalInserted} contacts for Merchant ID ${merchantId}`,
       entity_type: 'crm'
     });
 
-    return NextResponse.json({ success: true, count: finalRows.length });
+    return NextResponse.json({ success: true, count: totalInserted });
   } catch (err: any) {
     console.error('CRM Import Error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
