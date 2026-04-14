@@ -23,10 +23,14 @@ export default async function PartnershipsManagement() {
     .select('email, full_name')
     .in('email', clickerEmails);
 
-  const enrichedClicks = clicksData?.map(c => ({
-    ...c,
-    clientName: profiles?.find(p => p.email === c.user_email)?.full_name || 'Anonymous Client'
-  })) || [];
+  const enrichedClicks = clicksData?.map(c => {
+    const partner = links?.find(l => l.service === c.service);
+    return {
+      ...c,
+      partnerName: partner?.partner_name || c.service.replace('-', ' '),
+      clientName: profiles?.find(p => p.email === c.user_email)?.full_name || 'Anonymous Client'
+    };
+  }) || [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -62,7 +66,7 @@ export default async function PartnershipsManagement() {
               {enrichedClicks.map((c) => (
                 <div key={c.id} className="p-4 bg-slate-800/30 rounded-2xl border border-slate-700/50 flex items-center justify-between group hover:border-blue-500/30 transition-all">
                   <div>
-                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">{c.service.replace('-', ' ')}</p>
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">{c.partnerName}</p>
                     <p className="text-xs font-bold text-white">{c.clientName}</p>
                     <p className="text-[9px] text-slate-500 font-medium">{c.user_email}</p>
                   </div>

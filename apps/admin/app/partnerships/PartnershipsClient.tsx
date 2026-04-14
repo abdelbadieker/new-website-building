@@ -68,7 +68,7 @@ export function PartnershipsClient({ initialLinks }: { initialLinks: PLink[] }) 
 
   const services = [
     { id: 'web-creation', name: 'Web Creation' },
-    { id: 'estore', name: 'Estore' }
+    { id: 'estore', name: 'E-Store' }
   ];
 
   const inp = "w-full bg-[#07101F] border border-slate-700 rounded-xl px-4 py-3 text-white outline-none text-sm focus:border-blue-500 transition-all";

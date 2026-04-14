@@ -272,16 +272,16 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
                 </button>
               </div>
 
-             <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleDelete(b.id)}
                   disabled={processingId === b.id}
                   className="flex-1 py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                 >
                   {processingId === b.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                  Terminate
+                  Purge Request
                 </button>
-             </div>
+              </div>
           </div>
         </div>
       ))}
