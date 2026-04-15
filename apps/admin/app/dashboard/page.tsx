@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
     { label: 'Total Revenue', value: `DA ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     { label: 'Merchants & Staff', value: totalMerchants || 0, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { label: 'CRM Customers', value: totalCustomers || 0, icon: Users, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    { label: 'Active Orders', value: allOrders.length, icon: ShoppingBag, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Active Orders', value: (orders || []).length, icon: ShoppingBag, color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { label: 'Platform Services', value: totalServices || 0, icon: Briefcase, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
   ];
 

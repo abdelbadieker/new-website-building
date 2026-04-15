@@ -89,6 +89,7 @@ export default function CreativeStudioPage() {
   };
 
   const handleSubmit = async () => {
+    setSubmitting(true);
     try {
       let refUrl = form.reference_url;
 
@@ -236,7 +237,7 @@ export default function CreativeStudioPage() {
                       ) : (
                         <div onClick={() => fileInputRef.current?.click()} style={{ border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer' }}>
                           <Upload style={{ width: 24, height: 24, color: '#475569', marginBottom: 8 }} />
-                          <p style={{ fontSize: 12, color: '#64748b' }}>Click to upload reference video (Max 50MB)</p>
+                          <p style={{ fontSize: 12, color: '#64748b' }}>Click to upload reference video (Max 100MB)</p>
                         </div>
                       )}
                     </div>
