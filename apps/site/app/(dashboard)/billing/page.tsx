@@ -1,20 +1,38 @@
 'use client';
 import { CreditCard, Check, Zap, Crown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 const plans = [
-  { name: 'Starter', price: 'DA 2,900', period: '/month', features: ['Up to 100 orders/mo', 'Basic CRM', 'Email support', '1 user'], icon: Zap, color: '#94a3b8', current: true },
-  { name: 'Growth', price: 'DA 7,900', period: '/month', features: ['Unlimited orders', 'Full CRM + Analytics', 'AI Chatbot', 'Priority support', '5 users'], icon: CreditCard, color: '#60a5fa', current: false },
-  { name: 'Enterprise', price: 'DA 19,900', period: '/month', features: ['Everything in Growth', 'Custom integrations', 'Dedicated account manager', 'White-label options', 'Unlimited users'], icon: Crown, color: '#fbbf24', current: false },
+  { name: 'Starter', price: 'DA 2,900', period: '/month', features: ['Up to 100 orders/mo', 'Basic CRM', 'Email support', '1 user'], icon: Zap, color: '#94a3b8' },
+  { name: 'Growth', price: 'DA 7,900', period: '/month', features: ['Unlimited orders', 'Full CRM + Analytics', 'AI Chatbot', 'Priority support', '5 users'], icon: CreditCard, color: '#60a5fa' },
+  { name: 'Enterprise', price: 'DA 19,900', period: '/month', features: ['Everything in Growth', 'Custom integrations', 'Dedicated account manager', 'White-label options', 'Unlimited users'], icon: Crown, color: '#fbbf24' },
 ];
 
 export default function BillingPage() {
-  const [currentPlan] = useState('Starter');
+  const supabase = createClient();
+  const [currentPlan, setCurrentPlan] = useState('Starter');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', data.user.id)
+          .single();
+        if (profile?.plan) setCurrentPlan(profile.plan);
+      }
+      setLoading(false);
+    });
+  }, [supabase]);
+
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 24 } as React.CSSProperties };
 
   const handleUpgrade = (planName: string) => {
-    const whatsappNumber = "213555123456"; // Managed via Admin Platform Contacts
-    const message = encodeURIComponent(`Hi EcoMate Team! I'd like to upgrade my account to the ${planName} plan. My current plan is ${currentPlan}.`);
+    const whatsappNumber = "213555123456"; 
+    const message = encodeURIComponent(`Hi EcoMate Team! I'd like to update my account to the ${planName} plan. My current plan is ${currentPlan}.`);
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
@@ -26,11 +44,11 @@ export default function BillingPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Current Plan</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginTop: 4 }}>Starter</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginTop: 4 }}>{currentPlan}</div>
             <div style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Your next billing date is <span style={{ color: '#34d399', fontWeight: 700 }}>May 12, 2026</span></div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 32, fontWeight: 900, color: '#34d399' }}>DA 2,900</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: '#34d399' }}>{plans.find(p => p.name === currentPlan)?.price || 'DA --'}</div>
             <div style={{ fontSize: 13, color: '#64748b' }}>per month</div>
           </div>
         </div>
