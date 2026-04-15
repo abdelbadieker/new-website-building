@@ -103,6 +103,8 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
     'Growth': ['overview', 'orders', 'products', 'crm', 'analytics', 'web', 'estore', 'support'],
     'Enterprise': ['overview', 'orders', 'products', 'crm', 'ecotrack', 'fulfillment', 'chatbot', 'creative', 'web', 'estore', 'analytics', 'support']
   };
+  const isFeatureEnabled = (featureKey?: string) => {
+    if (!featureKey) return true;
 
     // 1. Check Global Admin Lock (Highest Priority - Master Override)
     if (lockedSections.includes(featureKey)) return false;
