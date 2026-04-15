@@ -50,9 +50,10 @@ export default function ProductsPage() {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
       return urlData.publicUrl;
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      alert(`Upload failed: ${err.message || 'Unknown error'}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Upload error:', error);
+      alert(`Upload failed: ${error.message || 'Unknown error'}`);
       return null;
     }
   };

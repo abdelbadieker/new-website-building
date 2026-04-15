@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, FileText, Upload, Video, X, ExternalLink, Share2 } from 'lucide-react';
+import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, Upload, Video, X, ExternalLink, Share2 } from 'lucide-react';
 
 type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; delivery_url: string; created_at: string };
 type PLink = { id: string; service: string; partner_name: string; url: string; description: string };
@@ -75,15 +75,16 @@ export default function CreativeStudioPage() {
         setTimeout(() => reject(new Error('Transmission timeout: Connection too slow for this file size.')), 120000)
       );
 
-      const { data, error } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+      const result = await Promise.race([uploadPromise, timeoutPromise]) as { data: any; error: any };
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
       return urlData.publicUrl;
-    } catch (error: any) {
-      console.error('Core Transmission Error:', error);
-      alert(`Critical: ${error.message || 'The data link was interrupted'}.`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Core Transmission Error:', err);
+      alert(`Critical: ${err.message || 'The data link was interrupted'}.`);
       return null;
     }
   };
@@ -119,8 +120,9 @@ export default function CreativeStudioPage() {
       setReferenceFile(null);
       setReferencePreview(null);
       fetchBriefs();
-    } catch (err: any) {
-       alert(`Submission failed: ${err.message}`);
+    } catch (err: unknown) {
+       const error = err as Error;
+       alert(`Submission failed: ${error.message}`);
     } finally {
       setSubmitting(false);
     }

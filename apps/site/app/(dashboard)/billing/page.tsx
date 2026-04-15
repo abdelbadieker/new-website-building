@@ -12,8 +12,6 @@ const plans = [
 export default function BillingPage() {
   const supabase = createClient();
   const [currentPlan, setCurrentPlan] = useState('Starter');
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
@@ -24,7 +22,6 @@ export default function BillingPage() {
           .single();
         if (profile?.plan) setCurrentPlan(profile.plan);
       }
-      setLoading(false);
     });
   }, [supabase]);
 
