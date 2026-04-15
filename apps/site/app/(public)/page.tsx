@@ -53,7 +53,7 @@ export default function LandingPage() {
             <div className="hs"><span className="hsn">98<span className="hsg">%</span></span><span className="hsl">AI response rate</span></div>
             <div className="hs"><span className="hsn">24<span className="hsg">/7</span></span><span className="hsl">Always-on automation</span></div>
             <div className="hs"><span className="hsn"><span className="hsg">0</span></span><span className="hsl">Missed orders</span></div>
-          </div>
+        </div>
         <div className="h-mockup-wrap">
           <div className="h-mockup shadow-2xl animate-in zoom-in-95 duration-1000 delay-300">
              <div className="h-mockup-top flex items-center gap-1.5 px-4 h-8 bg-[#1e293b] border-b border-slate-700/50 rounded-t-2xl">
