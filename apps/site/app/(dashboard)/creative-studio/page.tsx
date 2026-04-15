@@ -75,7 +75,7 @@ export default function CreativeStudioPage() {
         setTimeout(() => reject(new Error('Transmission timeout: Connection too slow for this file size.')), 120000)
       );
 
-      const result = await Promise.race([uploadPromise, timeoutPromise]) as { data: any; error: any };
+      const result = await Promise.race([uploadPromise, timeoutPromise]) as { data: unknown; error: unknown };
       
       if (result.error) throw result.error;
       

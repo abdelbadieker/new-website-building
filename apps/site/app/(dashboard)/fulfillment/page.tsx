@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Truck, Package, CheckCircle, Clock, Plus, X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 
@@ -170,7 +171,7 @@ export default function FulfillmentPage() {
                   <div onClick={() => fileInputRef.current?.click()} style={{ border: '2px dashed rgba(51,65,85,0.5)', borderRadius: 12, padding: imagePreview ? 0 : 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(7,16,31,0.4)', minHeight: 80, overflow: 'hidden' }}>
                     {imagePreview ? (
                       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                        <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 10 }} />
+                        <Image src={imagePreview} alt="Preview" width={400} height={150} style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 10 }} />
                         <button 
                           onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); }}
                           style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
@@ -211,7 +212,7 @@ export default function FulfillmentPage() {
                     <td style={{ padding: '14px 18px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(51,65,85,0.5)' }} />
+                          <Image src={p.image_url} alt={p.name} width={40} height={40} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(51,65,85,0.5)' }} />
                         ) : (
                           <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(51,65,85,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <ImageIcon style={{ width: 18, height: 18, color: '#475569' }} />

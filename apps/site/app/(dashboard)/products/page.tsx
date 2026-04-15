@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Pencil, Trash2, X, Search, Upload, Image as ImageIcon } from 'lucide-react';
 
@@ -151,7 +152,7 @@ export default function ProductsPage() {
               >
                 {imagePreview ? (
                   <div style={{ position: 'relative', width: '100%' }}>
-                    <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 10 }} />
+                    <Image src={imagePreview} alt="Preview" width={400} height={200} style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 10 }} />
                     <button 
                       onClick={(e) => { e.stopPropagation(); setImageFile(null); setImagePreview(null); }}
                       style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(239, 68, 68, 0.9)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transition: 'transform 0.2s' }}
@@ -198,7 +199,7 @@ export default function ProductsPage() {
                 <td style={{ padding: '14px 18px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(51,65,85,0.5)' }} />
+                      <Image src={p.image_url} alt={p.name} width={40} height={40} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(51,65,85,0.5)' }} />
                     ) : (
                       <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(51,65,85,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ImageIcon style={{ width: 18, height: 18, color: '#475569' }} />
