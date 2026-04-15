@@ -22,6 +22,7 @@ const MODULES = [
   { id: 'ecotrack', name: 'EcoTrack System', description: 'Logistics and delivery monitoring' }
 ];
 
+export default function LockerClient({ initialMerchants }: { initialMerchants: Merchant[] }) {
   const router = useRouter();
   const [merchants, setMerchants] = useState<Merchant[]>(initialMerchants);
   const [searchTerm, setSearchTerm] = useState('');
