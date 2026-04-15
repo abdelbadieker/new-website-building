@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Paintbrush, Send, Clock, CheckCircle, Loader, Link as LinkIcon, Upload, Video, X, ExternalLink, Share2 } from 'lucide-react';
+import { uploadFile } from '@/lib/storage-utils';
 
 type Brief = { id: string; video_type: string; duration: string; description: string; reference_url: string; reference_description: string; status: string; admin_notes: string; delivery_url: string; created_at: string };
 type PLink = { id: string; service: string; partner_name: string; url: string; description: string };
@@ -56,37 +57,19 @@ export default function CreativeStudioPage() {
   };
 
   const uploadReferenceVideo = async (file: File): Promise<string | null> => {
-    if (file.size > 100 * 1024 * 1024) { // 100MB safety limit
-      alert('File size exceeds the 100MB threshold for reference videos.');
+    const { url, error } = await uploadFile(supabase, file, {
+      bucket: 'creative-references',
+      path: `references/${userEmail || 'unknown'}`,
+      maxSizeMB: 100
+    });
+
+    if (error) {
+      console.error('Core Transmission Error:', error);
+      alert(`Critical: ${error}.`);
       return null;
     }
 
-    const ext = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    
-    try {
-      // Use a race to implement a 2-minute timeout for large uploads
-      const uploadPromise = supabase.storage.from('creative-references').upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Transmission timeout: Connection too slow for this file size.')), 120000)
-      );
-
-      const result = await Promise.race([uploadPromise, timeoutPromise]) as { data: unknown; error: unknown };
-      
-      if (result.error) throw result.error;
-      
-      const { data: urlData } = supabase.storage.from('creative-references').getPublicUrl(fileName);
-      return urlData.publicUrl;
-    } catch (error: unknown) {
-      const err = error as Error;
-      console.error('Core Transmission Error:', err);
-      alert(`Critical: ${err.message || 'The data link was interrupted'}.`);
-      return null;
-    }
+    return url;
   };
 
   const handleSubmit = async () => {

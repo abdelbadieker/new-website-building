@@ -29,9 +29,9 @@ export default function LockerClient({ initialMerchants }: { initialMerchants: M
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
 
-  const filtered = merchants.filter(m => 
-    m.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    m.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = (merchants || []).filter(m => 
+    m?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    m?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleToggleModule = async (moduleId: string) => {
@@ -107,6 +107,9 @@ export default function LockerClient({ initialMerchants }: { initialMerchants: M
                 )}
               </button>
             ))}
+            {filtered.length === 0 && (
+              <div className="text-center py-10 text-slate-500 text-xs">No merchants found</div>
+            )}
           </div>
         </div>
       </div>
@@ -126,7 +129,7 @@ export default function LockerClient({ initialMerchants }: { initialMerchants: M
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-800/50">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-[20px] bg-blue-600/10 text-blue-400 flex items-center justify-center font-black text-xl">
-                   {selectedMerchant.full_name?.charAt(0)}
+                   {selectedMerchant.full_name?.charAt(0) || <User size={24} />}
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-white">{selectedMerchant.full_name}</h3>

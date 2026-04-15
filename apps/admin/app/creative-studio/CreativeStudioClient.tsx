@@ -14,8 +14,11 @@ import {
   Edit3, 
   Loader2,
   FileText,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Upload
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { uploadFile } from '@/lib/storage-utils';
 
 type Brief = { 
   id: string; 
@@ -35,6 +38,8 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
   const [briefs, setBriefs] = useState<Brief[]>(initialBriefs);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
+  const supabase = createClient();
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const handleUpdate = async (id: string, updates: Partial<Brief>) => {
     setProcessingId(id);
@@ -247,14 +252,48 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
                   )}
                 </div>
                 <div className="relative group/delivery">
-                  <input 
-                    id={`delivery-${b.id}`}
-                    placeholder="Paste Google Drive / Cloud Link..."
-                    defaultValue={b.delivery_url || ''}
-                    className="w-full bg-[#07101F] border border-slate-700 group-hover/delivery:border-emerald-500/50 rounded-2xl px-4 py-4 text-xs text-white outline-none transition-all pr-12 font-bold shadow-inner"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      id={`delivery-${b.id}`}
+                      placeholder="Paste Google Drive / Cloud Link..."
+                      defaultValue={b.delivery_url || ''}
+                      className="w-full bg-[#07101F] border border-slate-700 group-hover/delivery:border-emerald-500/50 rounded-2xl px-4 py-4 text-xs text-white outline-none transition-all pr-12 font-bold shadow-inner"
+                    />
+                    <input 
+                      type="file" 
+                      id={`file-${b.id}`} 
+                      className="hidden" 
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        setUploadingId(b.id);
+                        const { url, error } = await uploadFile(supabase, file, { 
+                          bucket: 'platform-assets',
+                          path: `deliveries/${b.user_email}` 
+                        });
+                        
+                        if (error) {
+                          alert(error);
+                        } else if (url) {
+                          const inp = document.getElementById(`delivery-${b.id}`) as HTMLInputElement;
+                          if (inp) inp.value = url;
+                          handleUpdate(b.id, { delivery_url: url, status: 'Completed' });
+                        }
+                        setUploadingId(null);
+                      }}
+                    />
+                    <button 
+                      onClick={() => document.getElementById(`file-${b.id}`)?.click()}
+                      disabled={uploadingId === b.id}
+                      className="shrink-0 w-12 h-12 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-700 transition-all text-slate-400 hover:text-white"
+                      title="Upload File"
+                    >
+                      {uploadingId === b.id ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    </button>
+                  </div>
                   {b.delivery_url && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500">
+                    <div className="absolute right-16 top-1/2 -translate-y-1/2 text-emerald-500">
                       <CheckCircle2 size={16} />
                     </div>
                   )}

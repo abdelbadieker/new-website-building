@@ -21,7 +21,7 @@ export function PartnershipsClient({ initialLinks }: { initialLinks: PLink[] }) 
   const handleSave = async () => {
     setProcessingId(editingId || 'new');
     try {
-      const res = await fetch('/api/admin/partnerships/update', {
+      const res = await fetch('/api/admin/partner-links/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editingId, ...form })

@@ -20,21 +20,33 @@ export default function ReviewsListClient({ initialReviews }: { initialReviews: 
   const [supabase] = useState(() => createClient());
 
   const toggleApproval = async (review: Review) => {
-    const { error } = await supabase
-      .from('reviews')
-      .update({ is_approved: !review.is_approved })
-      .eq('id', review.id);
-
-    if (!error) {
+    try {
+      const res = await fetch('/api/admin/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: review.id, action: 'toggle', is_approved: !review.is_approved })
+      });
+      
+      if (!res.ok) throw new Error('Action failed');
       setReviews(reviews.map(r => r.id === review.id ? { ...r, is_approved: !r.is_approved } : r));
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
   const deleteReview = async (id: string) => {
     if (!confirm('Permanently delete this review? This action cannot be undone.')) return;
-    const { error } = await supabase.from('reviews').delete().eq('id', id);
-    if (!error) {
-       setReviews(reviews.filter(r => r.id !== id));
+    try {
+      const res = await fetch('/api/admin/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'delete' })
+      });
+      
+      if (!res.ok) throw new Error('Deletion failed');
+      setReviews(reviews.filter(r => r.id !== id));
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 

@@ -198,7 +198,37 @@ nav.scrolled{background:var(--nav-scroll);box-shadow:0 4px 40px rgba(0,0,0,.12)}
 .fcg{color:var(--g)}
 .fctag{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--g);margin-top:8px}
 .fcspark{display:flex;align-items:flex-end;gap:3px;height:28px;margin-top:10px}
-.fsb{width:7px;border-radius:3px 3px 0 0;background:rgba(37,99,235,.2)}.fsb.a{background:var(--s)}.fsb.p{background:var(--g)}
+.fcsb{width:3px;background:var(--s);border-radius:10px;animation:fca 1.5s ease-in-out infinite}
+@keyframes fca{0%,100%{height:40%}50%{height:100%}}
+
+/* HERO MOCKUP */
+.h-mockup-wrap {
+  position: absolute;
+  right: -5%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.h-mockup {
+  position: relative;
+  background: #07101F;
+  border: 1px solid var(--border-c);
+  border-radius: 24px;
+  overflow: visible;
+  backdrop-filter: blur(40px);
+  transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
+  box-shadow: -40px 40px 80px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 1024px) {
+  .h-mockup-wrap { display: none; }
+  .hi-wrap { max-width: 100%; text-align: center; }
+  .hact { justify-content: center; }
+  .hstats { justify-content: center; }
+}.fsb{width:7px;border-radius:3px 3px 0 0;background:rgba(37,99,235,.2)}.fsb.a{background:var(--s)}.fsb.p{background:var(--g)}
 .fcrow{display:flex;align-items:center;gap:8px}
 
 /* INTEGRATIONS */

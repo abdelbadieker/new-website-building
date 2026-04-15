@@ -16,13 +16,28 @@ export async function POST(req: Request) {
 
     // 2. Parse request body
     const body = await req.json();
-    const { id, ...updates } = body;
+    const { id, action, ...updates } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // 3. Perform Update using the Service Role Admin Client
+    // 3. Handle Deletion
+    if (action === 'delete') {
+      const { error: deleteError } = await supabaseAdmin
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Merchant account deleted' });
+    }
+
+    // 4. Perform Update using the Service Role Admin Client
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(updates)
@@ -35,7 +50,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 4. Log the action
+    // 5. Log the action
     await supabaseAdmin.from('activity_logs').insert({
       action: `Updated merchant account: ${id}`,
       details: JSON.stringify(updates),
