@@ -80,6 +80,39 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
         const name = profile?.full_name || meta?.full_name || meta?.name || data.user.email?.split('@')[0] || 'User';
         setUserName(name);
         setUserEmail(data.user.email || '');
+
+        // NEW: Realtime Subscription for live updates
+        const channel = supabase
+          .channel(`profile-updates-${data.user.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `id=eq.${data.user.id}`
+            },
+            (payload) => {
+              const updatedProfile = payload.new as any;
+              console.log('Profile updated in realtime:', updatedProfile);
+              if (updatedProfile.locked_sections) setLockedSections(updatedProfile.locked_sections);
+              if (updatedProfile.plan) setUserPlan(updatedProfile.plan);
+              if (updatedProfile.features) setFeatures(updatedProfile.features);
+              if (updatedProfile.full_name) setUserName(updatedProfile.full_name);
+              
+              // If banned, logout immediately
+              if (updatedProfile.is_banned) {
+                supabase.auth.signOut().then(() => {
+                  window.location.href = '/';
+                });
+              }
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
       }
     });
 

@@ -27,7 +27,9 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="hero">
-        <div className="hg1"></div><div className="hg2"></div>
+        <div className="hg1"></div>
+        <div className="hg2"></div>
+        <div id="hcanvas" style={{ opacity: 0.6 }}></div>
         <div className="hi-wrap">
           <div className="hbadge"><span className="hbdot"></span>All-in-One SaaS Platform for Algerian Business</div>
           <h1 className="hhline">

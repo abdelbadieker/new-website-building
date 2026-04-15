@@ -23,11 +23,14 @@ function parseCSV(text: string): Record<string, string>[] {
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       const v = values[index] || '';
-      if (header.includes('name')) row.name = v;
-      if (header.includes('email')) row.email = v;
-      if (header.includes('phone')) row.phone = v;
-      if (header.includes('city')) row.city = v;
-      if (header.includes('note')) row.notes = v;
+      const h = header.toLowerCase();
+      if (h.includes('name') || h.includes('nom') || h === 'n') row.name = v;
+      if (h.includes('email') || h.includes('mail')) row.email = v;
+      if (h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('tlf')) row.phone = v;
+      if (h.includes('city') || h.includes('wilaya') || h.includes('ville') || h.includes('location') || h.includes('place')) row.city = v;
+      if (h.includes('note') || h.includes('obs') || h.includes('remarque') || h.includes('desc')) row.notes = v;
+      if (h.includes('order') || h.includes('commande')) row.total_orders = v;
+      if (h.includes('spent') || h.includes('total') || h.includes('da')) row.total_spent = v;
     });
     return row;
   });
@@ -88,14 +91,17 @@ export default function CRMImportClient() {
        const headers = (jsonData[0] as string[]).map(h => String(h || '').trim().toLowerCase());
        return jsonData.slice(1).filter(row => row.some(cell => cell)).map(row => {
          const record: Record<string, string> = {};
-         headers.forEach((header, index) => {
-           const value = String(row[index] || '').trim();
-           if (header.includes('name')) record.name = value;
-           if (header.includes('email')) record.email = value;
-           if (header.includes('phone')) record.phone = value;
-           if (header.includes('city')) record.city = value;
-           if (header.includes('note')) record.notes = value;
-         });
+           headers.forEach((header, index) => {
+            const value = String(row[index] || '').trim();
+            const h = header.toLowerCase();
+            if (h.includes('name') || h.includes('nom') || h === 'n') record.name = value;
+            if (h.includes('email') || h.includes('mail')) record.email = value;
+            if (h.includes('phone') || h.includes('tel') || h.includes('mobile') || h.includes('tlf')) record.phone = value;
+            if (h.includes('city') || h.includes('wilaya') || h.includes('ville') || h.includes('location') || h.includes('place')) record.city = value;
+            if (h.includes('note') || h.includes('obs') || h.includes('remarque') || h.includes('desc')) record.notes = value;
+            if (h.includes('order') || h.includes('commande')) record.total_orders = value;
+            if (h.includes('spent') || h.includes('total') || h.includes('da')) record.total_spent = value;
+          });
          return record;
        });
     }

@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Lock, Unlock, Loader2, ShieldCheck, User, Check, X } from 'lucide-react';
 
 type Merchant = {
@@ -21,7 +22,7 @@ const MODULES = [
   { id: 'ecotrack', name: 'EcoTrack System', description: 'Logistics and delivery monitoring' }
 ];
 
-export function LockerClient({ initialMerchants }: { initialMerchants: Merchant[] }) {
+  const router = useRouter();
   const [merchants, setMerchants] = useState<Merchant[]>(initialMerchants);
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -54,10 +55,12 @@ export function LockerClient({ initialMerchants }: { initialMerchants: Merchant[
 
       if (!res.ok) throw new Error('Failed to update locker status');
 
-      // Update local state
       const updatedMerchant = { ...selectedMerchant, locked_sections: newLocked };
       setSelectedMerchant(updatedMerchant);
       setMerchants(prev => prev.map(m => m.id === selectedMerchant.id ? updatedMerchant : m));
+      
+      // Force Next.js to refresh the server data
+      router.refresh();
     } catch (err: any) {
       alert(err.message);
     } finally {

@@ -20,6 +20,7 @@ export default function FulfillmentPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState<'pipeline' | 'products'>('pipeline');
+  const [userId, setUserId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
@@ -33,7 +34,12 @@ export default function FulfillmentPage() {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,7 +70,7 @@ export default function FulfillmentPage() {
       }
     }
 
-    await supabase.from('products').insert({
+    const { error: insertError } = await supabase.from('products').insert({
       name: productForm.name,
       price: parseFloat(productForm.price) || 0,
       stock: parseInt(productForm.stock) || 0,
@@ -72,7 +78,15 @@ export default function FulfillmentPage() {
       category: productForm.category,
       image_url: imageUrl,
       is_fulfillment: true,
+      merchant_id: userId,
     });
+
+    if (insertError) {
+      console.error('Error adding product:', insertError);
+      alert('Failed to add product: ' + insertError.message);
+      setSubmitting(false);
+      return;
+    }
 
     setProductForm({ name: '', price: '', stock: '', description: '', category: 'General' });
     setImageFile(null);

@@ -25,6 +25,8 @@ export async function POST(req: Request) {
       phone: c.phone || null,
       city: c.city || null,
       notes: c.notes || null,
+      total_orders: parseInt(c.total_orders || '0') || 0,
+      total_spent: parseFloat(c.total_spent || '0') || 0,
       merchant_id: merchantId
     }));
 
