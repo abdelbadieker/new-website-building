@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Truck, Package, CheckCircle, Clock, Plus, X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
@@ -23,7 +23,7 @@ export default function FulfillmentPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [ordersRes, productsRes] = await Promise.all([
       supabase.from('orders').select('*').order('created_at', { ascending: false }),
       supabase.from('products').select('*').eq('is_fulfillment', true).order('created_at', { ascending: false }),
@@ -31,15 +31,14 @@ export default function FulfillmentPage() {
     setOrders(ordersRes.data || []);
     setFulfillmentProducts(productsRes.data || []);
     setLoading(false);
-  };
+  }, [supabase]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { 
     fetchData(); 
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setUserId(data.user.id);
     });
-  }, []);
+  }, [fetchData, supabase.auth]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

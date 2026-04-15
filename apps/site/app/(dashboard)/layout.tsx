@@ -93,7 +93,14 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
               filter: `id=eq.${data.user.id}`
             },
             (payload) => {
-              const updatedProfile = payload.new as any;
+              interface ProfileUpdate {
+                locked_sections?: string[];
+                plan?: string;
+                features?: Record<string, boolean>;
+                full_name?: string;
+                is_banned?: boolean;
+              }
+              const updatedProfile = payload.new as ProfileUpdate;
               console.log('Profile updated in realtime:', updatedProfile);
               if (updatedProfile.locked_sections) setLockedSections(updatedProfile.locked_sections);
               if (updatedProfile.plan) setUserPlan(updatedProfile.plan);
