@@ -100,6 +100,7 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   const planDefaultsByTier: Record<string, string[]> = {
     'Free': ['overview', 'support'],
     'Pro': ['overview', 'orders', 'products', 'crm', 'analytics', 'support'],
+    'Growth': ['overview', 'orders', 'products', 'crm', 'analytics', 'web', 'estore', 'support'],
     'Enterprise': ['overview', 'orders', 'products', 'crm', 'ecotrack', 'fulfillment', 'chatbot', 'creative', 'web', 'estore', 'analytics', 'support']
   };
 
