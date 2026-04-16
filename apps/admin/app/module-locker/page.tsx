@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { LockerClient } from './LockerClient';
+import LockerClient from './LockerClient';
 import { ShieldAlert } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
