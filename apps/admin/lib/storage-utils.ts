@@ -58,7 +58,7 @@ export async function uploadFile(
       setTimeout(() => reject(new Error('Transmission timeout: Connection too slow or file too large.')), timeoutMs)
     );
 
-    const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+    const result = await Promise.race([uploadPromise, timeoutPromise]) as { data: unknown; error: unknown };
 
     if (result.error) throw result.error;
 
@@ -70,11 +70,12 @@ export async function uploadFile(
       error: null,
       fileName: sanitizedName
     };
-  } catch (err: any) {
-    console.error(`[StorageUtil] Upload to ${bucket} failed:`, err);
+  } catch (err: unknown) {
+    const error = err as { message?: string };
+    console.error(`[StorageUtil] Upload to ${bucket} failed:`, error);
     return {
       url: null,
-      error: err.message || 'The data link was interrupted during transmission',
+      error: error.message || 'The data link was interrupted during transmission',
       fileName: null
     };
   }
