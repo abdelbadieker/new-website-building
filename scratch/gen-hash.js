@@ -1,8 +1,0 @@
-const bcrypt = require('bcryptjs');
-
-const password = process.argv[2] || 'admin123';
-const salt = bcrypt.genSaltSync(12);
-const hash = bcrypt.hashSync(password, salt);
-
-console.log(`Password: ${password}`);
-console.log(`Hash: ${hash}`);
