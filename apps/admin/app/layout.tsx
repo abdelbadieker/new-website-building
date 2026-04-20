@@ -4,36 +4,34 @@ import { ReactNode } from 'react';
 import LogoutButton from './LogoutButton';
 import { usePathname } from 'next/navigation';
 import './globals.css';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Palette, 
-  Share2, 
-  Database, 
-  Settings, 
-  PackageCheck, 
-  Contact, 
-  MessageSquare, 
-  History, 
+import {
+  LayoutDashboard,
+  Users,
+  Palette,
+  Share2,
+  Database,
+  Settings,
+  PackageCheck,
+  Contact,
+  History,
   Star,
-  Layers,
-  LifeBuoy
+  LifeBuoy,
+  CreditCard
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Overview', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
   { name: 'Merchants & Users', href: '/merchants', icon: <Users size={20} /> },
+  { name: 'Subscriptions', href: '/subscriptions', icon: <CreditCard size={20} /> },
   { name: 'Creative Studio', href: '/creative-studio', icon: <Palette size={20} /> },
-  { name: 'Strategic Partner Links', href: '/partner-links', icon: <Share2 size={20} /> },
-  { name: 'Platform Partnerships', href: '/partnerships', icon: <Layers size={20} /> },
+  { name: 'Partner Links', href: '/partner-links', icon: <Share2 size={20} /> },
   { name: 'Support Tickets', href: '/tickets', icon: <LifeBuoy size={20} /> },
   { name: 'CRM Hub', href: '/crm-import', icon: <Database size={20} /> },
-  { name: 'Reviews Management', href: '/reviews', icon: <Star size={20} /> },
-  { name: 'Services CMS', href: '/services', icon: <Layers size={20} /> },
+  { name: 'Reviews', href: '/reviews', icon: <Star size={20} /> },
   { name: 'Module Locker', href: '/module-locker', icon: <Settings size={20} /> },
   { name: 'Fulfillment', href: '/fulfillment-engine', icon: <PackageCheck size={20} /> },
   { name: 'Platform Contacts', href: '/platform-contacts', icon: <Contact size={20} /> },
-  { name: 'Activity Intelligence', href: '/activity-logs', icon: <History size={20} /> },
+  { name: 'Activity Logs', href: '/activity-logs', icon: <History size={20} /> },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -56,7 +54,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </div>
               <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-1.5 custom-scrollbar">
                 {navItems.map((item) => {
-                  const isActive = pathname === item.href || item.subItems?.some(s => pathname === s.href);
+                  const isActive = pathname === item.href;
                   
                   return (
                     <div key={item.name} className="space-y-1">
@@ -74,21 +72,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         <span className="text-xs font-black uppercase tracking-widest">{item.name}</span>
                       </Link>
                       
-                      {item.subItems && (
-                        <div className="pl-12 space-y-1 py-1">
-                          {item.subItems.map(sub => (
-                            <Link 
-                              key={sub.name}
-                              href={sub.href}
-                              className={`block py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
-                                pathname === sub.href ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
-                              }`}
-                            >
-                              • {sub.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   );
                 })}

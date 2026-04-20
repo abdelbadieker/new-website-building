@@ -9,9 +9,13 @@ const plans = [
   { name: 'Enterprise', price: 'DA 19,900', period: '/month', features: ['Everything in Growth', 'Custom integrations', 'Dedicated account manager', 'White-label options', 'Unlimited users'], icon: Crown, color: '#fbbf24' },
 ];
 
+// ⚠️  Replace this with your real WhatsApp business number before launch
+const ECOMATE_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || '213XXXXXXXXX';
+
 export default function BillingPage() {
   const supabase = createClient();
   const [currentPlan, setCurrentPlan] = useState('Starter');
+  const [subEndDate, setSubEndDate] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (data.user) {
@@ -21,6 +25,16 @@ export default function BillingPage() {
           .eq('id', data.user.id)
           .single();
         if (profile?.plan) setCurrentPlan(profile.plan);
+        // Fetch active subscription end date
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('end_date')
+          .eq('merchant_id', data.user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (sub?.end_date) setSubEndDate(sub.end_date);
       }
     });
   }, [supabase]);
@@ -28,9 +42,8 @@ export default function BillingPage() {
   const s = { card: { background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 16, padding: 24 } as React.CSSProperties };
 
   const handleUpgrade = (planName: string) => {
-    const whatsappNumber = "213555123456"; 
     const message = encodeURIComponent(`Hi EcoMate Team! I'd like to update my account to the ${planName} plan. My current plan is ${currentPlan}.`);
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${ECOMATE_WHATSAPP}?text=${message}`, '_blank');
   };
 
   return (
@@ -42,7 +55,11 @@ export default function BillingPage() {
           <div>
             <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Current Plan</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginTop: 4 }}>{currentPlan}</div>
-            <div style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Your next billing date is <span style={{ color: '#34d399', fontWeight: 700 }}>May 12, 2026</span></div>
+            <div style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>
+              {subEndDate
+                ? <>Subscription active until <span style={{ color: '#34d399', fontWeight: 700 }}>{new Date(subEndDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span></>
+                : 'Contact us to activate your subscription'}
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 32, fontWeight: 900, color: '#34d399' }}>{plans.find(p => p.name === currentPlan)?.price || 'DA --'}</div>

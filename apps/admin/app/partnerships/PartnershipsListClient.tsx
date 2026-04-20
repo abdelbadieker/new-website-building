@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Plus, Trash2, Loader2, Save, X, Image as ImageIcon, Smile } from 'lucide-react';
+import { Plus, Trash2, Loader2, Save, X, Image as ImageIcon, Smile, Share2 } from 'lucide-react';
 
 interface Partner {
   id: string;

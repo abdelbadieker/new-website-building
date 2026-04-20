@@ -46,7 +46,7 @@ export function PartnershipsClient({ initialLinks }: { initialLinks: PLink[] }) 
     if (!confirm('Delete this partner link?')) return;
     setProcessingId(id);
     try {
-      const res = await fetch('/api/admin/partnerships/update', {
+      const res = await fetch('/api/admin/partner-links/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, action: 'delete' })

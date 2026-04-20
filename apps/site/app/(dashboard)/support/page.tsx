@@ -13,15 +13,22 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Ticket | null>(null);
-  const [form, setForm] = useState({ subject: '', message: '', priority: 'Medium', user_email: '' });
+  const [userEmail, setUserEmail] = useState('');
+  const [form, setForm] = useState({ subject: '', message: '', priority: 'Medium' });
 
   const fetch_ = async () => { const { data } = await supabase.from('support_tickets').select('*').order('created_at', { ascending: false }); setTickets(data || []); setLoading(false); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => {
+    fetch_();
+    // Auto-fill user email from session
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
 
   const handleSubmit = async () => {
-    await supabase.from('support_tickets').insert({ ...form, status: 'Open' });
-    setForm({ subject: '', message: '', priority: 'Medium', user_email: '' }); setShowForm(false); fetch_();
+    await supabase.from('support_tickets').insert({ ...form, user_email: userEmail, status: 'Open' });
+    setForm({ subject: '', message: '', priority: 'Medium' }); setShowForm(false); fetch_();
   };
 
   const s = {
@@ -44,7 +51,7 @@ export default function SupportPage() {
           <button onClick={() => setShowForm(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X style={{ width: 18, height: 18 }} /></button>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 20 }}>Submit a Ticket</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div><label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Your Email</label><input value={form.user_email} onChange={e => setForm({ ...form, user_email: e.target.value })} style={s.input} placeholder="your@email.com" /></div>
+            {userEmail && <div style={{ fontSize: 12, color: '#64748b', padding: '8px 12px', background: 'rgba(52,211,153,0.06)', borderRadius: 8, border: '1px solid rgba(52,211,153,0.15)' }}>Submitting as: <strong style={{ color: '#34d399' }}>{userEmail}</strong></div>}
             <div><label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Subject</label><input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} style={s.input} placeholder="Brief description of the issue" /></div>
             <div><label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>Priority</label>
               <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} style={{ ...s.input, cursor: 'pointer' }}><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select>

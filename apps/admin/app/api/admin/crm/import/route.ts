@@ -6,9 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = cookies();
-    const session = cookieStore.get('admin_session')?.value;
-    if (!session || session !== 'authenticated') {
+    const session = cookies().get('admin_session')?.value;
+    if (session !== 'authenticated') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,41 +17,61 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Clean data and add merchant_id
-    const finalRows = customers.map(c => ({
-      name: c.name || null,
-      email: c.email || null,
-      phone: c.phone || null,
-      city: c.city || null,
-      notes: c.notes || null,
-      total_orders: parseInt(c.total_orders || '0') || 0,
-      total_spent: parseFloat(c.total_spent || '0') || 0,
-      merchant_id: merchantId
+    if (customers.length === 0) {
+      return NextResponse.json({ error: 'No customer records provided' }, { status: 400 });
+    }
+
+    // Map parsed CSV fields to database column names.
+    // The CRM client parses 'city' (generic label) but the DB stores it as 'wilaya'.
+    const finalRows = customers.map((c: Record<string, string>) => ({
+      name: c.name?.trim() || null,
+      email: c.email?.trim() || null,
+      phone: c.phone?.trim() || null,
+      wilaya: (c.wilaya || c.city || c.location)?.trim() || null,   // accept multiple labels
+      notes: c.notes?.trim() || null,
+      total_orders: Math.max(0, parseInt(c.total_orders || '0') || 0),
+      total_spent: Math.max(0, parseFloat(c.total_spent || '0') || 0),
+      merchant_id: merchantId,
     }));
 
-    // Split into chunks of 100 to avoid payload limits OR timeout during large inserts
+    // Insert in chunks of 100 to stay within Supabase request limits
     const CHUNK_SIZE = 100;
     let totalInserted = 0;
+    const errors: string[] = [];
 
     for (let i = 0; i < finalRows.length; i += CHUNK_SIZE) {
       const chunk = finalRows.slice(i, i + CHUNK_SIZE);
       const { error } = await supabaseAdmin.from('customers').insert(chunk);
       if (error) {
-        console.error(`Error inserting chunk ${i / CHUNK_SIZE}:`, error);
-        throw error;
+        console.error(`[CRM Import] Chunk ${Math.floor(i / CHUNK_SIZE)} failed:`, error.message);
+        errors.push(error.message);
+      } else {
+        totalInserted += chunk.length;
       }
-      totalInserted += chunk.length;
     }
 
-    // Log the activity
+    // Log the activity (non-blocking — don't fail the import if logging fails)
     await supabaseAdmin.from('activity_logs').insert({
-      action: `Bulk CRM Injection: ${totalInserted} contacts for Merchant ID ${merchantId}`,
-      entity_type: 'crm'
-    });
+      action: 'crm_bulk_import',
+      actor_role: 'admin',
+      actor_name: 'Admin',
+      target: `merchant:${merchantId}`,
+      metadata: { count: totalInserted },
+    }).then(null, null);
 
-    return NextResponse.json({ success: true, count: totalInserted });
-  } catch (err: any) {
-    console.error('CRM Import Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (errors.length > 0 && totalInserted === 0) {
+      return NextResponse.json({ error: errors[0], count: 0 }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      count: totalInserted,
+      partial: errors.length > 0,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  } catch (err: unknown) {
+    const message = (err as Error).message || 'Internal server error';
+    console.error('[CRM Import] Fatal error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

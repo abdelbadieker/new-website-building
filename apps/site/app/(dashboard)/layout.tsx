@@ -56,8 +56,12 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    // Fetch user and check ban status
+    // Fetch user and redirect to login if not authenticated
     supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) {
+        router.replace('/login');
+        return;
+      }
       if (data.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -101,7 +105,6 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                 is_banned?: boolean;
               }
               const updatedProfile = payload.new as ProfileUpdate;
-              console.log('Profile updated in realtime:', updatedProfile);
               if (updatedProfile.locked_sections) setLockedSections(updatedProfile.locked_sections);
               if (updatedProfile.plan) setUserPlan(updatedProfile.plan);
               if (updatedProfile.features) setFeatures(updatedProfile.features);

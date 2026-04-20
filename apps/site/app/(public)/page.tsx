@@ -34,7 +34,7 @@ export default function LandingPage() {
           <div className="hbadge"><span className="hbdot"></span>All-in-One SaaS Platform for Algerian Business</div>
           <h1 className="hhline">
             <span className="hh1">Build your</span>
-            <span className="hh2" style={{ paddingRight: '0.1em' }}>Business</span>
+            <span className="hh2">Business</span>
             <span className="hh3">without the <span className="hh3c">complexity.</span></span>
           </h1>
           <p className="hsub">EcoMate centralizes every tool Algerian SMEs need into one platform — AI chatbot automation, order management, CRM. No technical knowledge required.</p>

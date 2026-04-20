@@ -1,11 +1,14 @@
-'use client';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+// Prevent static generation — this page fetches fresh data on every request
+export const dynamic = 'force-dynamic';
 
 // Dynamically import the CRM Import logic with SSR disabled.
-// This prevents server-side exceptions caused by heavy file-parsing libraries 
+// This prevents server-side exceptions caused by heavy file-parsing libraries
 // (xlsx, pdfjs-dist) that touch browser-only or Node-only APIs during pre-rendering.
-const CRMImportClient = dynamic(() => import('./CRMImportClient'), { 
+const CRMImportClient = dynamicImport(() => import('./CRMImportClient'), {
   ssr: false,
   loading: () => (
     <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
@@ -16,6 +19,13 @@ const CRMImportClient = dynamic(() => import('./CRMImportClient'), {
   )
 });
 
-export default function CRMImportPage() {
-  return <CRMImportClient />;
+export default async function CRMImportPage() {
+  // Fetch merchants server-side using the admin client (bypasses RLS).
+  // This prevents an empty merchant selector when Supabase RLS is enabled.
+  const { data: merchants } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, email')
+    .order('full_name', { ascending: true });
+
+  return <CRMImportClient initialMerchants={merchants || []} />;
 }

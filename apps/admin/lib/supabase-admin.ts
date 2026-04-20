@@ -4,16 +4,38 @@ import { createClient } from '@supabase/supabase-js';
 // IT MUST ONLY BE USED ON THE SERVER (Server Components, API Routes, Server Actions).
 // NEVER expose this client or the service role key to the browser.
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Supabase URL or Service Role Key missing in environment variables');
+// Lazy singleton - created on first use, not at module load time.
+// This prevents build failures when env vars are not available during static analysis.
+let _client: ReturnType<typeof createClient> | null = null;
+
+function getAdminClient() {
+  if (_client) return _client;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error(
+      '[supabase-admin] NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing. ' +
+      'Add these to your .env.local and Vercel environment variables.'
+    );
+  }
+  _client = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  return _client;
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
+// Proxy: every property access goes through the lazy getter
+export const supabaseAdmin = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    const client = getAdminClient();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
   },
 });

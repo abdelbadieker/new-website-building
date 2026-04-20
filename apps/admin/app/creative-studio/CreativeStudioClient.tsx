@@ -81,19 +81,24 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
     const targets = briefs.filter(b => statuses.includes(b.status));
     if (targets.length === 0) return alert('No requests found for the selected cleanup filter.');
     if (!confirm(`Delete all ${targets.length} ${statuses.join('/')} requests? This action is irreversible.`)) return;
-    
+
     setProcessingId('bulk');
+    const failed: string[] = [];
     try {
       for (const b of targets) {
-        await fetch('/api/admin/briefs', {
+        const res = await fetch('/api/admin/briefs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: b.id, action: 'delete' })
         });
+        if (!res.ok) failed.push(b.id);
       }
-      setBriefs(current => current.filter(b => !statuses.includes(b.status)));
-    } catch (err: any) {
-      alert(err.message);
+      // Only remove successfully deleted items from state
+      const deletedIds = new Set(targets.filter(b => !failed.includes(b.id)).map(b => b.id));
+      setBriefs(current => current.filter(b => !deletedIds.has(b.id)));
+      if (failed.length > 0) alert(`${failed.length} items could not be deleted. Please try again.`);
+    } catch (err: unknown) {
+      alert((err as Error).message || 'Bulk deletion failed');
     } finally {
       setProcessingId(null);
     }
@@ -165,7 +170,7 @@ export function CreativeStudioClient({ initialBriefs }: { initialBriefs: Brief[]
              </div>
              <p className="text-slate-500 font-medium">No client briefs detected in the production pipeline.</p>
           </div>
-        ) : briefs.map((b) => (
+        ) : filteredBriefs.map((b) => (
         <div key={b.id} className="p-8 group hover:bg-slate-800/20 transition-all flex flex-col lg:flex-row gap-8">
           {/* Section 1: Client Metadata */}
           <div className="lg:w-1/4 space-y-4">

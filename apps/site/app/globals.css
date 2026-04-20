@@ -165,7 +165,7 @@ nav.scrolled{background:var(--nav-scroll);box-shadow:0 4px 40px rgba(0,0,0,.12)}
 @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{opacity:.5;box-shadow:0 0 0 5px rgba(16,185,129,0)}}
 .hhline{font-family:'Poppins',sans-serif;line-height:1.06;letter-spacing:-.03em;margin-bottom:28px}
 .hh1{display:block;font-size:clamp(44px,5vw,68px);font-weight:700;color:var(--text-main);animation:fu .6s .1s ease both;opacity:0}
-.hh2{display:block;font-size:clamp(78px,11vw,140px);font-weight:900;font-style:italic;line-height:1;background:linear-gradient(135deg,var(--s) 0%,#93c5fd 55%,var(--p) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fu .6s .2s ease both;opacity:0;filter:drop-shadow(0 0 40px rgba(37,99,235,.3));padding: 0 0.15em;margin: 0 -0.15em}
+.hh2{display:block;font-size:clamp(78px,11vw,140px);font-weight:900;font-style:italic;line-height:1.05;background:linear-gradient(135deg,var(--s) 0%,#93c5fd 55%,var(--p) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fu .6s .2s ease both;opacity:0;filter:drop-shadow(0 0 40px rgba(37,99,235,.3));padding:0.05em 0.25em;margin:0 -0.25em;overflow:visible;}
 .hh3{display:block;font-size:clamp(44px,5vw,68px);font-weight:700;color:var(--text-main);animation:fu .6s .3s ease both;opacity:0}
 .hh3c{color:var(--g);text-shadow:0 0 40px rgba(16,185,129,.5)}
 [data-theme="light"] .hh3c{text-shadow:0 0 24px rgba(16,185,129,.3)}

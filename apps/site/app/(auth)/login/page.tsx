@@ -30,7 +30,7 @@ export default function MerchantLogin() {
       setError(signInError.message);
       setLoading(false);
     } else {
-      router.push('/dashboard-redirect'); // Usually the admin app handles dashboards, but we can redirect or show success
+      router.push('/overview');
     }
   };
 

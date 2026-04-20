@@ -1,9 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useState } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Link as LinkIcon, FileSpreadsheet, X } from 'lucide-react';
-
-function createClient() { return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); }
 
 type Merchant = { id: string; full_name: string; email: string };
 
@@ -36,9 +33,8 @@ function parseCSV(text: string): Record<string, string>[] {
   });
 }
 
-export default function CRMImportClient() {
-  const [supabase] = useState(() => createClient());
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+export default function CRMImportClient({ initialMerchants = [] }: { initialMerchants?: Merchant[] }) {
+  const [merchants] = useState<Merchant[]>(initialMerchants);
   const [selectedMerchant, setSelectedMerchant] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -46,12 +42,6 @@ export default function CRMImportClient() {
   const [error, setError] = useState<string | null>(null);
   const [googleSheetsUrl, setGoogleSheetsUrl] = useState('');
   const [importMode, setImportMode] = useState<'file' | 'sheets'>('file');
-
-  useEffect(() => {
-    supabase.from('profiles').select('id, full_name, email').order('full_name').then(({ data }) => {
-      setMerchants(data || []);
-    });
-  }, [supabase]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
