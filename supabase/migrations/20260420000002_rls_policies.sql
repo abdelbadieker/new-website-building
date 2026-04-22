@@ -85,48 +85,55 @@ CREATE POLICY "Merchant deletes own products"
 
 -- ============================================================
 -- 3.  orders
---     Merchants read/update only their own orders.
---     Customers don't have a Supabase Auth account in the current
---     design, so all customer-side order creation goes through
---     admin API routes (service role).
+--     No merchant_id column exists on this table — orders are
+--     currently shared across the platform. Any authenticated
+--     merchant can read, insert, and update orders.
+--     (Future: add merchant_id column and tighten these policies.)
 -- ============================================================
-DROP POLICY IF EXISTS "Merchant reads own orders"   ON public.orders;
-DROP POLICY IF EXISTS "Merchant updates own orders" ON public.orders;
+DROP POLICY IF EXISTS "Authenticated merchants read orders"   ON public.orders;
+DROP POLICY IF EXISTS "Authenticated merchants insert orders" ON public.orders;
+DROP POLICY IF EXISTS "Authenticated merchants update orders" ON public.orders;
 
-CREATE POLICY "Merchant reads own orders"
+CREATE POLICY "Authenticated merchants read orders"
   ON public.orders
   FOR SELECT
-  USING (auth.uid() = merchant_id);
+  USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Merchant updates own orders"
+CREATE POLICY "Authenticated merchants insert orders"
+  ON public.orders
+  FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated merchants update orders"
   ON public.orders
   FOR UPDATE
-  USING (auth.uid() = merchant_id)
-  WITH CHECK (auth.uid() = merchant_id);
+  USING (auth.role() = 'authenticated');
 
 -- ============================================================
 -- 4.  customers
---     Merchants read only their own customers.
+--     No merchant_id column exists on this table — customers are
+--     currently shared across the platform. Any authenticated
+--     merchant can read and manage customers.
+--     (Future: add merchant_id column and tighten these policies.)
 -- ============================================================
-DROP POLICY IF EXISTS "Merchant reads own customers"   ON public.customers;
-DROP POLICY IF EXISTS "Merchant inserts own customers" ON public.customers;
-DROP POLICY IF EXISTS "Merchant updates own customers" ON public.customers;
+DROP POLICY IF EXISTS "Authenticated merchants read customers"   ON public.customers;
+DROP POLICY IF EXISTS "Authenticated merchants insert customers" ON public.customers;
+DROP POLICY IF EXISTS "Authenticated merchants update customers" ON public.customers;
 
-CREATE POLICY "Merchant reads own customers"
+CREATE POLICY "Authenticated merchants read customers"
   ON public.customers
   FOR SELECT
-  USING (auth.uid() = merchant_id);
+  USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Merchant inserts own customers"
+CREATE POLICY "Authenticated merchants insert customers"
   ON public.customers
   FOR INSERT
-  WITH CHECK (auth.uid() = merchant_id);
+  WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Merchant updates own customers"
+CREATE POLICY "Authenticated merchants update customers"
   ON public.customers
   FOR UPDATE
-  USING (auth.uid() = merchant_id)
-  WITH CHECK (auth.uid() = merchant_id);
+  USING (auth.role() = 'authenticated');
 
 -- ============================================================
 -- 5.  support_tickets
@@ -160,7 +167,8 @@ CREATE POLICY "Merchant inserts own tickets"
 -- ============================================================
 -- 6.  creative_briefs
 --     Merchants submit briefs and can read their own.
---     merchant_id column must reference auth.uid().
+--     Uses user_email (same pattern as support_tickets) because
+--     the table stores user_email rather than a merchant_id FK.
 -- ============================================================
 DROP POLICY IF EXISTS "Merchant reads own briefs"   ON public.creative_briefs;
 DROP POLICY IF EXISTS "Merchant inserts own briefs" ON public.creative_briefs;
@@ -168,12 +176,22 @@ DROP POLICY IF EXISTS "Merchant inserts own briefs" ON public.creative_briefs;
 CREATE POLICY "Merchant reads own briefs"
   ON public.creative_briefs
   FOR SELECT
-  USING (auth.uid() = merchant_id);
+  USING (
+    auth.uid() IS NOT NULL
+    AND user_email = (
+      SELECT email FROM auth.users WHERE id = auth.uid()
+    )
+  );
 
 CREATE POLICY "Merchant inserts own briefs"
   ON public.creative_briefs
   FOR INSERT
-  WITH CHECK (auth.uid() = merchant_id);
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND user_email = (
+      SELECT email FROM auth.users WHERE id = auth.uid()
+    )
+  );
 
 -- ============================================================
 -- 7.  activity_logs

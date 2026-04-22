@@ -29,12 +29,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === 'orders') {
-    const merchantId = searchParams.get('merchantId');
-    if (!merchantId) return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+    // orders table has no merchant_id column — fetch all orders sorted by date.
+    // The fulfillment engine UI is admin-only so showing all orders is correct here.
     const { data, error } = await supabaseAdmin
       .from('orders')
       .select('*')
-      .eq('merchant_id', merchantId)
       .order('created_at', { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ data });
