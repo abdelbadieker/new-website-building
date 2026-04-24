@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Lock, Sparkles, ShieldAlert, Rocket } from 'lucide-react';
+import { Lock, ShieldAlert, Mail } from 'lucide-react';
 
 interface SectionLockProps {
   title: string;
@@ -68,14 +68,14 @@ export default function SectionLock({ title, description }: SectionLockProps) {
           }}>
             {title} is Locked
           </h2>
-          
+
           <p style={{
             fontSize: '15px',
             color: '#94a3b8',
             lineHeight: 1.6,
             marginBottom: '32px'
           }}>
-            {description || `This feature is currently not included in your plan. Upgrade your subscription or contact the administrator to unlock the full potential of EcoMate.`}
+            {description || `This section has been locked by your administrator. Please contact support if you believe this is a mistake — once the lock is lifted, this page will unlock automatically.`}
           </p>
 
           <div style={{
@@ -83,8 +83,8 @@ export default function SectionLock({ title, description }: SectionLockProps) {
             flexDirection: 'column',
             gap: '12px'
           }}>
-            <button 
-              onClick={() => window.location.href = '/billing'}
+            <button
+              onClick={() => window.location.href = '/support'}
               style={{
                 width: '100%',
                 padding: '14px 24px',
@@ -105,43 +105,20 @@ export default function SectionLock({ title, description }: SectionLockProps) {
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <Rocket style={{ width: 18, height: 18 }} /> Upgrade Now
-            </button>
-            
-            <button 
-              onClick={() => window.location.href = '/support'}
-              style={{
-                width: '100%',
-                padding: '14px 24px',
-                borderRadius: '12px',
-                background: 'rgba(51, 65, 85, 0.3)',
-                color: '#e2e8f0',
-                fontSize: '15px',
-                fontWeight: 600,
-                border: '1px solid rgba(51, 65, 85, 0.5)',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(51, 65, 85, 0.5)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(51, 65, 85, 0.3)'}
-            >
-              Contact Support
+              <Mail style={{ width: 18, height: 18 }} /> Contact Support
             </button>
           </div>
 
-          <div style={{ 
-            marginTop: '40px', 
-            paddingTop: '24px', 
+          <div style={{
+            marginTop: '40px',
+            paddingTop: '24px',
             borderTop: '1px solid rgba(51, 65, 85, 0.3)',
             display: 'flex',
             justifyContent: 'center',
             gap: '24px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#475569' }}>
-              <ShieldAlert style={{ width: 14, height: 14 }} /> Secure Access
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#475569' }}>
-              <Sparkles style={{ width: 14, height: 14 }} /> Premium Feature
+              <ShieldAlert style={{ width: 14, height: 14 }} /> Locked by administrator
             </div>
           </div>
         </div>

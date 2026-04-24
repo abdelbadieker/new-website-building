@@ -63,15 +63,20 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
         return;
       }
       if (data.user) {
+        // maybeSingle() so a missing profile row (e.g. brand-new Google signup
+        // whose trigger race hasn't landed yet) does NOT error out or lock
+        // the whole dashboard. Fall back to "all unlocked" in that case and
+        // let the realtime/visibility refetches catch up once the row exists.
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name, is_banned, features, plan, locked_sections')
           .eq('id', data.user.id)
-          .single();
-        
+          .maybeSingle();
+
         if (profile?.features) setFeatures(profile.features);
         if (profile?.plan) setUserPlan(profile.plan);
-        if (profile?.locked_sections) setLockedSections(profile.locked_sections);
+        // Explicitly default to [] when profile is missing so sections render.
+        setLockedSections(Array.isArray(profile?.locked_sections) ? profile!.locked_sections : []);
 
         if (profile?.is_banned) {
           alert('Your account has been restricted by the administrator.');
@@ -84,6 +89,22 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
         const name = profile?.full_name || meta?.full_name || meta?.name || data.user.email?.split('@')[0] || 'User';
         setUserName(name);
         setUserEmail(data.user.email || '');
+
+        // If the profile row wasn't there, backfill it client-side so the
+        // admin panel sees the merchant and realtime channel has a row to
+        // broadcast UPDATEs for. Uses upsert so it's safe under the
+        // handle_new_user trigger race.
+        if (!profile) {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: name,
+            avatar_url: meta?.avatar_url || meta?.picture || null,
+            plan: 'Starter',
+            features: { crm: true, orders: true, support: true, chatbot: false, analytics: false },
+            locked_sections: [],
+          }, { onConflict: 'id' });
+        }
 
         // NEW: Realtime Subscription for live updates
         const channel = supabase
@@ -134,9 +155,9 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('full_name, is_banned, features, plan, locked_sections')
         .eq('id', authData.user.id)
-        .single();
+        .maybeSingle();
       if (!profile) return;
-      setLockedSections(profile.locked_sections ?? []);
+      setLockedSections(Array.isArray(profile.locked_sections) ? profile.locked_sections : []);
       setFeatures(profile.features ?? {});
       if (profile.plan) setUserPlan(profile.plan);
       if (profile.full_name) setUserName(profile.full_name);
