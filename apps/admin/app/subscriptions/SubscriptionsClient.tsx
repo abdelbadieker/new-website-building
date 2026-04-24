@@ -51,7 +51,8 @@ export function SubscriptionsClient({
 
   const filtered = subs.filter(s => filter === 'all' || s.status === filter);
 
-  const performAction = async (id: string, action: 'approve' | 'reject') => {
+  const performAction = async (id: string, action: 'approve' | 'reject' | 'expire') => {
+    if (action === 'expire' && !confirm('Mark this active subscription as expired and downgrade the merchant to Starter?')) return;
     setProcessingId(id);
     try {
       const res = await fetch('/api/admin/subscriptions', {
@@ -60,14 +61,26 @@ export function SubscriptionsClient({
         body: JSON.stringify({ id, action }),
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Action failed');
-      const newStatus = action === 'approve' ? 'active' : 'rejected';
-      setSubs(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+      const now = new Date().toISOString();
+      const endPlus1y = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      setSubs(prev => prev.map(s => {
+        if (s.id !== id) return s;
+        if (action === 'approve') return { ...s, status: 'active', start_date: now, end_date: endPlus1y };
+        if (action === 'reject')  return { ...s, status: 'rejected' };
+        return { ...s, status: 'expired', end_date: now };
+      }));
     } catch (err: unknown) {
       alert((err as Error).message);
     } finally {
       setProcessingId(null);
     }
   };
+
+  function daysRemaining(endDate: string | null): number | null {
+    if (!endDate) return null;
+    const ms = new Date(endDate).getTime() - Date.now();
+    return Math.ceil(ms / (1000 * 60 * 60 * 24));
+  }
 
   return (
     <div>
@@ -116,6 +129,23 @@ export function SubscriptionsClient({
                 <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase border ${STATUS_STYLES[sub.status] || STATUS_STYLES.expired}`}>
                   {sub.status}
                 </span>
+                {sub.status === 'active' && sub.end_date && (() => {
+                  const d = daysRemaining(sub.end_date);
+                  if (d === null) return null;
+                  const color = d > 30 ? 'text-emerald-400' : d > 7 ? 'text-amber-400' : 'text-red-400';
+                  return (
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${color}`}>
+                      {d > 0 ? `${d} day${d === 1 ? '' : 's'} left` : 'Ended'}
+                    </div>
+                  );
+                })()}
+                {(sub.start_date || sub.end_date) && (
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    {sub.start_date && <>Start: {new Date(sub.start_date).toLocaleDateString()}</>}
+                    {sub.start_date && sub.end_date && ' · '}
+                    {sub.end_date && <>End: {new Date(sub.end_date).toLocaleDateString()}</>}
+                  </div>
+                )}
               </div>
 
               {/* Payment Details */}
@@ -166,9 +196,20 @@ export function SubscriptionsClient({
                       Reject
                     </button>
                   </>
+                ) : sub.status === 'active' ? (
+                  <button
+                    onClick={() => performAction(sub.id, 'expire')}
+                    disabled={processingId === sub.id}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    {processingId === sub.id
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <Clock size={12} />}
+                    Mark Expired
+                  </button>
                 ) : (
                   <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest">
-                    {sub.status === 'active' ? '✅ Activated' : sub.status === 'rejected' ? '❌ Rejected' : '⏰ Expired'}
+                    {sub.status === 'rejected' ? 'Rejected' : 'Expired'}
                   </div>
                 )}
               </div>

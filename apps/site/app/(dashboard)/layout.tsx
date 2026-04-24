@@ -24,8 +24,8 @@ const navItems = [
   { name: 'Web Creation', href: '/web-creation', icon: Globe, feature: 'web' },
   { name: 'E-Store', href: '/estore', icon: Store, feature: 'estore' },
   { name: 'Analytics', href: '/analytics', icon: PieChart, feature: 'analytics' },
-  { name: 'Billing', href: '/billing', icon: CreditCard },
-  { name: 'Support', href: '/support', icon: HelpCircle },
+  { name: 'Billing', href: '/billing', icon: CreditCard, feature: 'billing' },
+  { name: 'Support', href: '/support', icon: HelpCircle, feature: 'support' },
 ];
 
 type Notif = { id: string; title: string; desc: string; time: string };
@@ -105,9 +105,9 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                 is_banned?: boolean;
               }
               const updatedProfile = payload.new as ProfileUpdate;
-              if (updatedProfile.locked_sections) setLockedSections(updatedProfile.locked_sections);
+              if ('locked_sections' in updatedProfile) setLockedSections(updatedProfile.locked_sections ?? []);
               if (updatedProfile.plan) setUserPlan(updatedProfile.plan);
-              if (updatedProfile.features) setFeatures(updatedProfile.features);
+              if ('features' in updatedProfile) setFeatures(updatedProfile.features ?? {});
               if (updatedProfile.full_name) setUserName(updatedProfile.full_name);
               
               // If banned, logout immediately
@@ -126,6 +126,28 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
       }
     });
 
+    // Refetch profile when tab regains focus — fallback if realtime is not enabled
+    const refetchProfile = async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, is_banned, features, plan, locked_sections')
+        .eq('id', authData.user.id)
+        .single();
+      if (!profile) return;
+      setLockedSections(profile.locked_sections ?? []);
+      setFeatures(profile.features ?? {});
+      if (profile.plan) setUserPlan(profile.plan);
+      if (profile.full_name) setUserName(profile.full_name);
+      if (profile.is_banned) {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      }
+    };
+    const onVisibility = () => { if (document.visibilityState === 'visible') refetchProfile(); };
+    document.addEventListener('visibilitychange', onVisibility);
+
     // Fetch notifications
     const fetchNotifs = async () => {
       const items: Notif[] = [];
@@ -138,30 +160,19 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
       setNotifications(items);
     };
     fetchNotifs();
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
-  const planDefaultsByTier: Record<string, string[]> = {
-    'Free': ['overview', 'support'],
-    'Pro': ['overview', 'orders', 'products', 'crm', 'analytics', 'support'],
-    'Growth': ['overview', 'orders', 'products', 'crm', 'analytics', 'web', 'estore', 'support'],
-    'Enterprise': ['overview', 'orders', 'products', 'crm', 'ecotrack', 'fulfillment', 'chatbot', 'creative', 'web', 'estore', 'analytics', 'support']
-  };
+  // Admin's Module Locker is the single source of truth. A section is
+  // available to the merchant UNLESS the admin has explicitly locked it.
+  // (features / userPlan are still loaded for other UI bits but no longer
+  // gate visibility.)
   const isFeatureEnabled = (featureKey?: string) => {
     if (!featureKey) return true;
-
-    // 1. Check Global Admin Lock (Highest Priority - Master Override)
-    if (lockedSections.includes(featureKey)) return false;
-
-    // 2. Check Plan Basics
-    if (['overview', 'support', 'billing'].includes(featureKey)) return true;
-    
-    // 3. Check custom overrides from Admin Hub (Deprecated but preserved for compatibility)
-    if (features[featureKey] === true) return true;
-    if (features[featureKey] === false) return false;
-    
-    // 4. Check Plan Defaults
-    const defaults = planDefaultsByTier[userPlan || 'Free'] || planDefaultsByTier['Free'];
-    return defaults.includes(featureKey);
+    return !lockedSections.includes(featureKey);
   };
 
   const handleLogout = async () => {

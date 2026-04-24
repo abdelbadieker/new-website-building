@@ -89,6 +89,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: 'Subscription rejected' });
     }
 
+    if (action === 'expire') {
+      const { data: sub, error: fetchErr } = await supabaseAdmin
+        .from('subscriptions')
+        .select('merchant_id')
+        .eq('id', id)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const { error } = await supabaseAdmin
+        .from('subscriptions')
+        .update({ status: 'expired', end_date: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+
+      // Downgrade merchant to Starter on manual expiry
+      if (sub?.merchant_id) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ plan: 'Starter' })
+          .eq('id', sub.merchant_id);
+      }
+
+      await supabaseAdmin.from('activity_logs').insert({
+        action: 'subscription_expired',
+        actor_role: 'admin',
+        actor_name: 'Admin',
+        target: `subscription:${id}`,
+      }).then(null, null);
+
+      return NextResponse.json({ success: true, message: 'Subscription marked expired' });
+    }
+
     // Generic update (admin edit)
     const updatePayload: Record<string, unknown> = {};
     if (updates.plan !== undefined) updatePayload.plan = updates.plan;

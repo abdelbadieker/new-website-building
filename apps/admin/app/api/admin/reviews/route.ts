@@ -47,10 +47,7 @@ export async function POST(req: Request) {
       const approved = action === 'approve' ? true : is_approved;
       const { error } = await supabaseAdmin
         .from('reviews')
-        .update({
-          is_approved: approved,
-          approved_at: approved ? new Date().toISOString() : null,
-        })
+        .update({ is_approved: approved })
         .eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -67,7 +64,6 @@ export async function POST(req: Request) {
         rating: Number(rating),
         comment,
         is_approved: true,
-        approved_at: new Date().toISOString(),
       }).select().single();
       if (error) throw error;
       return NextResponse.json({ success: true, data });

@@ -1,23 +1,31 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function MerchantLogin() {
   const router = useRouter();
+  const search = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push('/overview');
     });
-  });
+    // Surface OAuth errors bounced back from /auth/callback
+    const e = search?.get('error');
+    const d = search?.get('error_description');
+    if (e || d) setError(d || e || '');
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +43,19 @@ export default function MerchantLogin() {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
+    setGoogleLoading(true);
+    setError("");
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
     });
+    if (oauthError) {
+      setError(`Google sign-in failed: ${oauthError.message}`);
+      setGoogleLoading(false);
+    }
+    // On success Supabase redirects the window; no further action here.
   };
 
   return (
@@ -72,15 +87,27 @@ export default function MerchantLogin() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-sub)' }}>Password</label>
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-1 transition-all"
-              style={{ backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-c)', color: 'var(--text-main)' }}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 pr-12 rounded-lg focus:outline-none focus:ring-1 transition-all"
+                style={{ backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-c)', color: 'var(--text-main)' }}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           
           <div className="flex items-center justify-between">
@@ -113,10 +140,11 @@ export default function MerchantLogin() {
             </div>
           </div>
           
-          <button 
+          <button
             onClick={handleGoogleLogin}
-            type="button" 
-            className="mt-6 w-full flex justify-center items-center py-3 px-4 rounded-lg font-medium transition-all hover:-translate-y-0.5"
+            type="button"
+            disabled={googleLoading}
+            className="mt-6 w-full flex justify-center items-center py-3 px-4 rounded-lg font-medium transition-all hover:-translate-y-0.5 disabled:opacity-60"
             style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-c)', color: 'var(--text-main)' }}
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -125,6 +153,7 @@ export default function MerchantLogin() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
+            {googleLoading ? 'Redirecting...' : ''}
             Google
           </button>
         </div>

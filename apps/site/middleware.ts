@@ -16,10 +16,19 @@ export async function middleware(request: NextRequest) {
   // Create a response we can mutate (for setting cookies)
   const response = NextResponse.next();
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If Supabase env is not configured (e.g. misconfigured env),
+  // fail open on public routes and deny dashboard routes with a redirect to /login.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return response;
+  }
+
   // Build a Supabase server client that can read the session from cookies
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {

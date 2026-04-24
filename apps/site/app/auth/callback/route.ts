@@ -5,8 +5,19 @@ import { cookies } from 'next/headers';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/overview';
+
+  // Provider-level errors (e.g. user cancelled, misconfigured OAuth app) arrive
+  // as ?error=...&error_description=... — bounce them through to the login page
+  // so the user sees what actually went wrong.
+  const providerError = searchParams.get('error');
+  const providerErrorDescription = searchParams.get('error_description');
+  if (providerError) {
+    const q = new URLSearchParams();
+    q.set('error', providerError);
+    if (providerErrorDescription) q.set('error_description', providerErrorDescription);
+    return NextResponse.redirect(`${origin}/login?${q.toString()}`);
+  }
 
   if (code) {
     const cookieStore = cookies();
@@ -31,8 +42,12 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+    const q = new URLSearchParams({
+      error: 'exchange_failed',
+      error_description: error.message,
+    });
+    return NextResponse.redirect(`${origin}/login?${q.toString()}`);
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`);
+  return NextResponse.redirect(`${origin}/login?error=no_code&error_description=Missing+OAuth+code+in+callback`);
 }

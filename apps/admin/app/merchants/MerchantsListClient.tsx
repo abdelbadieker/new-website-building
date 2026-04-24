@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, MoreVertical, Shield, ShieldOff, Edit3, Trash2, Loader2, User } from 'lucide-react';
 
 type Profile = {
@@ -13,9 +14,15 @@ type Profile = {
 };
 
 export function MerchantsListClient({ initialMerchants }: { initialMerchants: Profile[] }) {
+  const router = useRouter();
   const [merchants, setMerchants] = useState<Profile[]>(initialMerchants);
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Keep local list in sync with server-provided data (e.g. after router.refresh())
+  useEffect(() => {
+    setMerchants(initialMerchants);
+  }, [initialMerchants]);
 
   const filteredMerchants = merchants.filter(m => 
     m.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -48,10 +55,16 @@ export function MerchantsListClient({ initialMerchants }: { initialMerchants: Pr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...updates })
       });
-      if (!res.ok) throw new Error('Update failed');
-      
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({ error: 'Update failed' }));
+        throw new Error(j.error || 'Update failed');
+      }
+
       const { data } = await res.json();
-      setMerchants(current => current.map(m => m.id === id ? { ...m, ...updates } : m));
+      // Merge the server-returned row when available to guarantee DB truth wins over local state
+      setMerchants(current => current.map(m => m.id === id ? { ...m, ...(data ?? updates) } : m));
+      // Invalidate the server-side cache so a refresh reflects persisted changes
+      router.refresh();
     } catch (err: any) {
       alert(err.message);
     } finally {

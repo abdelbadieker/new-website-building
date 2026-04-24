@@ -24,10 +24,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .update({
-        is_approved,
-        approved_at: is_approved ? new Date().toISOString() : null,
-      })
+      .update({ is_approved })
       .eq('id', id)
       .select()
       .single();

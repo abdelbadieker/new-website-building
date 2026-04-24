@@ -24,6 +24,12 @@ function getAdminClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      // Bypass Next.js's default fetch cache so admin reads always see fresh DB state
+      // (otherwise updates can appear to "revert" on refresh).
+      fetch: (input, init) =>
+        fetch(input as RequestInfo, { ...init, cache: 'no-store' }),
+    },
   });
   return _client;
 }

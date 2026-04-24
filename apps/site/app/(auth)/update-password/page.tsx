@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -9,6 +10,7 @@ export default function UpdatePassword() {
   const router = useRouter();
   const supabase = createClient();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -72,16 +74,28 @@ export default function UpdatePassword() {
           
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-sub)' }}>New Password</label>
-            <input 
-              type="password" 
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-1 transition-all"
-              style={{ backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-c)', color: 'var(--text-main)' }}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 pr-12 rounded-lg focus:outline-none focus:ring-1 transition-all"
+                style={{ backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-c)', color: 'var(--text-main)' }}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <button 
