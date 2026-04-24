@@ -55,29 +55,6 @@ export default function LandingPage() {
             <div className="hs"><span className="hsn"><span className="hsg">0</span></span><span className="hsl">Missed orders</span></div>
           </div>
         </div>
-        <div className="h-mockup-wrap">
-          <div className="h-mockup shadow-2xl animate-in zoom-in-95 duration-1000 delay-300">
-             <div className="h-mockup-top flex items-center gap-1.5 px-4 h-8 bg-[#1e293b] border-b border-slate-700/50 rounded-t-2xl">
-               <div className="w-2.5 h-2.5 rounded-full bg-red-500/30"></div>
-               <div className="w-2.5 h-2.5 rounded-full bg-amber-500/30"></div>
-               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/30"></div>
-             </div>
-             <div className="h-mockup-body p-4 bg-[#0A1628] rounded-b-2xl">
-                <div className="flex gap-3 mb-4">
-                  <div className="w-2/3 h-24 bg-blue-500/5 border border-blue-500/10 rounded-2xl"></div>
-                  <div className="w-1/3 h-24 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl"></div>
-                </div>
-                <div className="space-y-3">
-                  <div className="w-full h-8 bg-slate-800/10 border border-slate-800/20 rounded-xl"></div>
-                  <div className="w-full h-8 bg-slate-800/10 border border-slate-800/20 rounded-xl"></div>
-                  <div className="w-3/4 h-8 bg-slate-800/10 border border-slate-800/20 rounded-xl"></div>
-                </div>
-             </div>
-             <div className="h-mockup-badge absolute -top-4 -right-4 bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-2xl shadow-xl shadow-blue-900/40">
-                Merchant Panel
-             </div>
-          </div>
-        </div>
       </section>
 
       <PartnershipsMarquee />
