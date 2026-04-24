@@ -187,13 +187,30 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Admin's Module Locker is the single source of truth. A section is
-  // available to the merchant UNLESS the admin has explicitly locked it.
-  // (features / userPlan are still loaded for other UI bits but no longer
-  // gate visibility.)
+  // HARD UNLOCK MODE
+  // --------------------------------------------------------------
+  // Every section is unlocked for every user — old, new, and any
+  // future signup. The admin Module Locker still writes to the DB
+  // (in case we want to gate sections later), but the client UI no
+  // longer honors those values. Flip FORCE_UNLOCK_ALL to false to
+  // re-enable admin-controlled per-section locking.
+  const FORCE_UNLOCK_ALL = true;
+
   const isFeatureEnabled = (featureKey?: string) => {
     if (!featureKey) return true;
-    return !lockedSections.includes(featureKey);
+    if (FORCE_UNLOCK_ALL) return true;
+    let locks: string[] = [];
+    if (Array.isArray(lockedSections)) {
+      locks = lockedSections as string[];
+    } else if (typeof lockedSections === 'string') {
+      try {
+        const parsed = JSON.parse(lockedSections);
+        if (Array.isArray(parsed)) locks = parsed;
+      } catch {
+        /* ignore — default to unlocked */
+      }
+    }
+    return !locks.includes(featureKey);
   };
 
   const handleLogout = async () => {
