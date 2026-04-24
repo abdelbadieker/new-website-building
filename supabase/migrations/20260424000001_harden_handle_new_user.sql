@@ -59,7 +59,7 @@ BEGIN
       v_avatar,
       'Starter',
       '{"crm":true,"orders":true,"support":true,"chatbot":false,"analytics":false}'::jsonb,
-      ARRAY[]::text[],   -- ALL sections UNLOCKED by default
+      '[]'::jsonb,       -- ALL sections UNLOCKED by default (jsonb array)
       NOW(),
       NOW()
     )
@@ -96,10 +96,18 @@ SELECT
   COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', split_part(u.email,'@',1), 'User'),
   'Starter',
   '{"crm":true,"orders":true,"support":true,"chatbot":false,"analytics":false}'::jsonb,
-  ARRAY[]::text[],
+  '[]'::jsonb,
   NOW(),
   NOW()
 FROM auth.users u
 LEFT JOIN public.profiles p ON p.id = u.id
 WHERE p.id IS NULL
 ON CONFLICT (id) DO NOTHING;
+
+-- Also clear any existing merchants' locks so "unlock all" sticks.
+-- (Safe: resets to fully-unlocked state.)
+UPDATE public.profiles
+   SET locked_sections = '[]'::jsonb,
+       updated_at      = NOW()
+ WHERE locked_sections IS NULL
+    OR locked_sections = 'null'::jsonb;
