@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { 
-  LayoutDashboard, ShoppingBag, Package, Users, MapPin, 
-  Mail, Sparkles, Paintbrush, Globe, Store, 
+import {
+  LayoutDashboard, ShoppingBag, Package, Users, MapPin,
+  Mail, Sparkles, Paintbrush, Globe, Store,
   PieChart, CreditCard, HelpCircle, Search, Bell, LogOut,
-  ChevronRight, ChevronDown, Menu, X, User, Lock
+  ChevronRight, ChevronDown, Menu, X, User
 } from 'lucide-react';
-import SectionLock from '@/components/SectionLock';
+// SectionLock import removed — every section is always unlocked.
 
 const navItems = [
   { name: 'Overview', href: '/overview', icon: LayoutDashboard, feature: 'overview' },
@@ -187,31 +187,12 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // HARD UNLOCK MODE
-  // --------------------------------------------------------------
-  // Every section is unlocked for every user — old, new, and any
-  // future signup. The admin Module Locker still writes to the DB
-  // (in case we want to gate sections later), but the client UI no
-  // longer honors those values. Flip FORCE_UNLOCK_ALL to false to
-  // re-enable admin-controlled per-section locking.
-  const FORCE_UNLOCK_ALL = true;
-
-  const isFeatureEnabled = (featureKey?: string) => {
-    if (!featureKey) return true;
-    if (FORCE_UNLOCK_ALL) return true;
-    let locks: string[] = [];
-    if (Array.isArray(lockedSections)) {
-      locks = lockedSections as string[];
-    } else if (typeof lockedSections === 'string') {
-      try {
-        const parsed = JSON.parse(lockedSections);
-        if (Array.isArray(parsed)) locks = parsed;
-      } catch {
-        /* ignore — default to unlocked */
-      }
-    }
-    return !locks.includes(featureKey);
-  };
+  // HARD UNLOCK MODE — every section is always unlocked for every user.
+  // The admin Module Locker still writes to locked_sections in the DB
+  // (so we can re-enable gating later without a migration), but the
+  // client UI no longer reads or honors that value. The isLocked path
+  // has been removed entirely from the sidebar and main content so no
+  // lock icon or "upgrade" gate can ever render.
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -296,15 +277,14 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
             }} />
           </button>
 
-          {/* Nav Items */}
+          {/* Nav Items — every section is always unlocked and clickable */}
             {navOpen && navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
-              const isLocked = !isFeatureEnabled(item.feature);
 
               return (
-                <Link 
-                  key={item.name} 
+                <Link
+                  key={item.name}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   style={{
@@ -317,29 +297,28 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
                     textDecoration: 'none',
                     fontSize: 13,
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? '#34d399' : isLocked ? '#475569' : '#94a3b8',
+                    color: isActive ? '#34d399' : '#94a3b8',
                     background: isActive ? 'rgba(59,130,246,0.08)' : 'transparent',
                     border: isActive ? '1px solid rgba(59,130,246,0.15)' : '1px solid transparent',
                     transition: 'all 0.2s',
-                    opacity: isLocked ? 0.7 : 1,
+                    opacity: 1,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive && !isLocked) {
+                    if (!isActive) {
                       e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                       e.currentTarget.style.color = '#e2e8f0';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive && !isLocked) {
+                    if (!isActive) {
                       e.currentTarget.style.background = 'transparent';
                       e.currentTarget.style.color = '#94a3b8';
                     }
                   }}
                 >
-                  <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : isLocked ? '#1e293b' : '#64748b' }} />
+                  <Icon style={{ width: 16, height: 16, color: isActive ? '#34d399' : '#64748b' }} />
                   <span>{item.name}</span>
-                  {isLocked && <Lock style={{ width: 12, height: 12, marginLeft: 'auto', color: '#475569' }} />}
-                  {!isLocked && isActive && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
+                  {isActive && <ChevronRight style={{ width: 14, height: 14, marginLeft: 'auto', opacity: 0.5 }} />}
                 </Link>
               );
             })}
@@ -448,16 +427,10 @@ export default function MerchantLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content — no lock gate; every section is always accessible */}
         <main style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            {(() => {
-              const currentItem = navItems.find(item => item.href === pathname);
-              if (currentItem?.feature && !isFeatureEnabled(currentItem.feature)) {
-                return <SectionLock title={currentItem.name} />;
-              }
-              return children;
-            })()}
+            {children}
           </div>
         </main>
       </div>
