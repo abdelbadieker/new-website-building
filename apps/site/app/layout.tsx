@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   description: "Centralize your business into one seamless platform.",
 };
 
+// Ensure every page is rendered fresh and clients always get the
+// latest HTML — no Vercel edge cache, no Next.js data cache.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function RootLayout({
   children,
 }: Readonly<{
